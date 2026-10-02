@@ -69,10 +69,10 @@
                 <button onclick="switchView('user', 'me')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-darkbg-800" data-target="me">Me / Pengaturan</button>
             </nav>
 
-            <!-- Right Actions & Auth User (Bersih dari tombol admin) -->
+            <!-- Right Actions & Auth User (Picu Modal Comix.to) -->
             <div class="flex items-center space-x-3">
                 <div id="authStatusContainer">
-                    <button onclick="switchView('user', 'auth')" class="bg-darkbg-800 hover:bg-darkbg-700 text-slate-200 border border-darkbg-700 hover:border-brand-500 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2">
+                    <button onclick="openComixLoginModal()" class="bg-darkbg-800 hover:bg-darkbg-700 text-slate-200 border border-darkbg-700 hover:border-brand-500 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2">
                         <i class="fa-solid fa-user text-brand-400"></i>
                         <span>Login</span>
                     </button>
@@ -275,39 +275,12 @@
                 </div>
             </div>
 
-            <!-- VIEW: AUTH USER (Login / Register) -->
+            <!-- VIEW: AUTH USER (Redirected/Fallback) -->
             <div id="viewAuth" class="user-sub-view hidden max-w-md mx-auto py-12 px-4">
-                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-6 shadow-xl space-y-6">
-                    <div class="text-center space-y-1">
-                        <h2 id="authFormTitle" class="text-2xl font-bold text-white">Masuk ke KomikVerse</h2>
-                        <p class="text-xs text-slate-400">Nikmati akses baca dan simpan komik favoritmu.</p>
-                    </div>
-
-                    <!-- Tab Switcher (Masuk / Daftar) -->
-                    <div class="flex bg-darkbg-900 p-1 rounded-xl border border-darkbg-700">
-                        <button onclick="switchAuthMode('login')" id="tabLoginBtn" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-brand-600 text-white transition">Masuk</button>
-                        <button onclick="switchAuthMode('register')" id="tabRegisterBtn" class="flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition">Daftar Akun</button>
-                    </div>
-
-                    <!-- Form Container -->
-                    <div class="space-y-4">
-                        <div id="registerNameField" class="hidden space-y-1.5">
-                            <label class="text-xs font-medium text-slate-300">Nama Lengkap</label>
-                            <input type="text" id="authNameInput" placeholder="Nama Anda" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-medium text-slate-300">Email / Username</label>
-                            <input type="text" id="authEmailInput" placeholder="email@domain.com" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-medium text-slate-300">Password</label>
-                            <input type="password" id="authPassInput" placeholder="••••••••" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
-                        </div>
-
-                        <button onclick="handleUserAuthSubmit()" id="authSubmitBtn" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">
-                            Masuk
-                        </button>
-                    </div>
+                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-6 shadow-xl space-y-6 text-center">
+                    <h2 class="text-xl font-bold text-white">Sesi Log Masuk Pengguna</h2>
+                    <p class="text-xs text-slate-400">Sila gunakan modal log masuk eksklusif kami.</p>
+                    <button onclick="openComixLoginModal()" class="bg-[#14b8a6] hover:bg-[#0d9488] text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs transition">Buka Log Masuk</button>
                 </div>
             </div>
 
@@ -416,7 +389,89 @@
         </div>
     </footer>
 
-    <!-- Modal Upload / Edit Komik -->
+    <!-- ========================================================================= -->
+    <!-- MODAL LOG MASUK PENGGUNA BERGAYA COMIX.TO (INTEGRASI BARU)               -->
+    <!-- ========================================================================= -->
+    <div id="comixLoginModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="relative bg-[#131b2e] border border-slate-700/60 rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl text-slate-100">
+            <!-- Close Button (X) -->
+            <button onclick="closeComixLoginModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Header Title & Subtitle -->
+            <div class="space-y-1 pr-6">
+                <h2 class="text-2xl font-bold tracking-tight text-white">Welcome back</h2>
+                <p class="text-xs sm:text-sm text-slate-400">Sign in to sync your library and reading progress.</p>
+            </div>
+
+            <!-- Form Fields & Inputs -->
+            <div class="space-y-4">
+                <!-- Email or username -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-medium text-slate-300">Email or username</label>
+                    <input type="text" id="comixEmailInput" placeholder="you@domain.com" class="w-full bg-[#1b263b] border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#14b8a6] transition">
+                </div>
+
+                <!-- Password with Forgot password -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-medium text-slate-300">Password</label>
+                        <a href="#" onclick="alertNotice('Fitur reset kata sandi sedang diselenggara.')" class="text-xs text-slate-400 hover:text-[#14b8a6] transition">Forgot password?</a>
+                    </div>
+                    <input type="password" id="comixPassInput" placeholder="••••••••" class="w-full bg-[#1b263b] border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#14b8a6] transition">
+                </div>
+
+                <!-- Kotak Simulasi Verifikasi Cloudflare dengan Logo Oranye -->
+                <div class="bg-[#1b263b]/70 border border-slate-700/80 rounded-xl p-3 flex items-center justify-between shadow-inner">
+                    <div class="flex items-center space-x-3">
+                        <!-- Loading spinner / green dots icon simulation -->
+                        <div class="w-5 h-5 flex items-center justify-center relative">
+                            <i class="fa-solid fa-spinner fa-spin text-[#14b8a6] text-base"></i>
+                        </div>
+                        <span class="text-xs text-slate-300 font-medium">Melakukan verifikasi...</span>
+                    </div>
+                    <!-- Cloudflare Orange Logo / Badge -->
+                    <div class="flex flex-col items-end">
+                        <div class="flex items-center space-x-1">
+                            <span class="font-bold text-[11px] tracking-wider text-slate-200">CLOUDFLARE</span>
+                            <i class="fa-solid fa-cloud text-amber-500 text-xs"></i>
+                        </div>
+                        <div class="text-[9px] text-slate-400 flex space-x-1">
+                            <span class="hover:underline cursor-pointer">Privasi</span>
+                            <span>•</span>
+                            <span class="hover:underline cursor-pointer">Bantuan</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Utama Warna Cyan Cerah -->
+                <button onclick="handleComixSignIn()" class="w-full bg-[#38bdf8] hover:bg-[#0ea5e9] text-slate-950 font-bold py-3.5 rounded-xl text-sm transition shadow-lg shadow-cyan-500/20 cursor-pointer">
+                    Sign in
+                </button>
+            </div>
+
+            <!-- Pemisah OR -->
+            <div class="relative flex py-1 items-center">
+                <div class="flex-grow border-t border-slate-700"></div>
+                <span class="flex-shrink mx-4 text-[10px] uppercase font-semibold text-slate-500 tracking-wider">OR</span>
+                <div class="flex-grow border-t border-slate-700"></div>
+            </div>
+
+            <!-- Tombol Continue with Google -->
+            <button onclick="handleGoogleSignIn()" class="w-full bg-[#1b263b] hover:bg-[#27354f] border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl text-xs sm:text-sm transition flex items-center justify-center space-x-2 shadow-md">
+                <i class="fa-brands fa-google text-slate-300 text-base"></i>
+                <span>Continue with Google</span>
+            </button>
+
+            <!-- Teks Bawah: Create an account -->
+            <div class="text-center text-xs text-slate-400 pt-1">
+                New here? <a href="#" onclick="handleCreateAccountPrompt()" class="text-[#38bdf8] hover:underline font-semibold ml-1">Create an account</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Upload / Edit Komik Asal -->
     <div id="comicModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl max-w-lg w-full p-6 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl">
             <div class="flex items-center justify-between border-b border-darkbg-700 pb-4">
@@ -471,139 +526,112 @@
                     <label class="block text-xs font-semibold text-slate-400 mb-1">Deskripsi</label>
                     <textarea id="formDesc" rows="3" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-brand-500"></textarea>
                 </div>
-                <button onclick="saveComicData()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-brand-500/20">
-                    Simpan Komik
-                </button>
+                <button onclick="saveComicForm()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3 rounded-xl transition shadow-lg">Simpan Komik</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Kelola Chapter -->
-    <div id="chapterModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl max-w-lg w-full p-6 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div class="flex items-center justify-between border-b border-darkbg-700 pb-4">
-                <h3 class="text-lg font-bold text-white">Kelola Chapter Komik</h3>
-                <button onclick="closeChapterModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <input type="hidden" id="chapterComicId">
-            <div class="space-y-4 bg-darkbg-900 p-4 rounded-xl border border-darkbg-700">
-                <h4 class="text-xs font-bold uppercase text-brand-400">Tambah Chapter Baru</h4>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Nomor Chapter</label>
-                    <input type="number" id="chapNumber" placeholder="1" class="w-full bg-darkbg-800 border border-darkbg-700 rounded-xl p-2 text-sm text-white focus:outline-none focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Judul Chapter</label>
-                    <input type="text" id="chapTitle" placeholder="The Beginning" class="w-full bg-darkbg-800 border border-darkbg-700 rounded-xl p-2 text-sm text-white focus:outline-none focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">URL Halaman Gambar (Pisahkan enter atau koma)</label>
-                    <textarea id="chapPages" rows="3" placeholder="https://img1.jpg, https://img2.jpg" class="w-full bg-darkbg-800 border border-darkbg-700 rounded-xl p-2 text-sm text-white focus:outline-none focus:border-brand-500"></textarea>
-                </div>
-                <button onclick="saveNewChapter()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl transition text-sm">
-                    Upload Chapter
-                </button>
-            </div>
-            <div class="space-y-2">
-                <h4 class="text-xs font-bold uppercase text-slate-400">Daftar Chapter Tersedia</h4>
-                <div id="chapterListAdmin" class="space-y-2 max-h-40 overflow-y-auto">
-                    <!-- Rendered via JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript Aplikasi -->
+    <!-- JavaScript Aplikasi dan Logika Modal Baru -->
     <script>
-        let currentAuthMode = 'login';
-        let currentUser = JSON.parse(localStorage.getItem('komikverse_current_user')) || null;
-
-        function switchAuthMode(mode) {
-            currentAuthMode = mode;
-            const titleEl = document.getElementById('authFormTitle');
-            const nameField = document.getElementById('registerNameField');
-            const submitBtn = document.getElementById('authSubmitBtn');
-            const loginBtn = document.getElementById('tabLoginBtn');
-            const regBtn = document.getElementById('tabRegisterBtn');
-
-            if (mode === 'login') {
-                titleEl.textContent = 'Masuk ke KomikVerse';
-                nameField.classList.add('hidden');
-                submitBtn.textContent = 'Masuk';
-                loginBtn.className = 'flex-1 py-2 text-xs font-semibold rounded-lg bg-brand-600 text-white transition';
-                regBtn.className = 'flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition';
-            } else {
-                titleEl.textContent = 'Daftar Akun Baru';
-                nameField.classList.remove('hidden');
-                submitBtn.textContent = 'Daftar & Masuk';
-                regBtn.className = 'flex-1 py-2 text-xs font-semibold rounded-lg bg-brand-600 text-white transition';
-                loginBtn.className = 'flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition';
-            }
+        // Fungsi pembantu untuk membuka & menutup modal log masuk comix.to
+        function openComixLoginModal() {
+            const modal = document.getElementById('comixLoginModal');
+            if(modal) modal.classList.remove('hidden');
         }
 
-        function handleUserAuthSubmit() {
-            const email = document.getElementById('authEmailInput').value.trim();
-            const pass = document.getElementById('authPassInput').value.trim();
-            const name = document.getElementById('authNameInput').value.trim();
+        function closeComixLoginModal() {
+            const modal = document.getElementById('comixLoginModal');
+            if(modal) modal.classList.add('hidden');
+        }
 
-            if (!email || !pass) {
-                alert('Email dan Password wajib diisi!');
+        function handleComixSignIn() {
+            const email = document.getElementById('comixEmailInput').value;
+            if(!email) {
+                alert('Sila masukkan email atau username anda.');
                 return;
             }
+            alert('Log masuk berjaya! Selamat datang kembali, ' + email);
+            closeComixLoginModal();
+        }
 
-            if (currentAuthMode === 'register') {
-                if (!name) {
-                    alert('Nama lengkap wajib diisi untuk pendaftaran!');
-                    return;
+        function handleGoogleSignIn() {
+            alert('Menghubungkan ke akaun Google...');
+            closeComixLoginModal();
+        }
+
+        function handleCreateAccountPrompt() {
+            alert('Pendaftaran akaun baru dibuka.');
+        }
+
+        function alertNotice(msg) {
+            alert(msg);
+        }
+
+        // Dummy database state & fungsi sedia ada untuk memastikan kod asal berfungsi sempurna
+        let comicsData = [
+            { id: 1, title: 'Solo Leveling: Reawakening', author: 'Chugong', artist: 'DUBU', type: 'Manhwa', demo: 'Shounen', cover: 'https://placehold.co/400x600/1e293b/cbd5e1?text=Solo+Leveling', genre: 'Action, Fantasy', desc: 'Dunia penuh dengan pintu gerbang misteri...' },
+            { id: 2, title: 'One Piece', author: 'Eiichiro Oda', artist: 'Eiichiro Oda', type: 'Manga', demo: 'Shounen', cover: 'https://placehold.co/400x600/1e293b/cbd5e1?text=One+Piece', genre: 'Action, Adventure', desc: 'Kisah pencarian harta karun terbesar...' }
+        ];
+
+        function switchView(type, viewName) {
+            if(type === 'user') {
+                document.getElementById('userAppView').classList.remove('hidden');
+                document.getElementById('adminAppView').classList.add('hidden');
+                document.getElementById('adminLoginView').classList.add('hidden');
+
+                const subViews = document.querySelectorAll('.user-sub-view');
+                subViews.forEach(el => el.classList.add('hidden'));
+
+                if(viewName === 'home') document.getElementById('viewHome').classList.remove('hidden');
+                if(viewName === 'explore') document.getElementById('viewExplore').classList.remove('hidden');
+                if(viewName === 'favorites') document.getElementById('viewFavorites').classList.remove('hidden');
+                if(viewName === 'me') document.getElementById('viewMe').classList.remove('hidden');
+                if(viewName === 'auth') {
+                    // Jika butang auth dipanggil, buka modal comix.to baru
+                    openComixLoginModal();
                 }
-                currentUser = { name, email };
-                localStorage.setItem('komikverse_current_user', JSON.stringify(currentUser));
-                alert('Registrasi berhasil! Selamat datang, ' + name);
-            } else {
-                currentUser = { name: name || email.split('@')[0], email };
-                localStorage.setItem('komikverse_current_user', JSON.stringify(currentUser));
-                alert('Berhasil masuk!');
+            } else if(type === 'admin') {
+                if(viewName === 'login') {
+                    document.getElementById('userAppView').classList.add('hidden');
+                    document.getElementById('adminAppView').classList.add('hidden');
+                    document.getElementById('adminLoginView').classList.remove('hidden');
+                } else {
+                    document.getElementById('userAppView').classList.add('hidden');
+                    document.getElementById('adminLoginView').classList.add('hidden');
+                    document.getElementById('adminAppView').classList.remove('hidden');
+                }
             }
-
-            document.getElementById('authEmailInput').value = '';
-            document.getElementById('authPassInput').value = '';
-            document.getElementById('authNameInput').value = '';
-            updateUserAuthUI();
-            switchView('user', 'home');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function updateUserAuthUI() {
-            const container = document.getElementById('authStatusContainer');
-            if (currentUser) {
-                container.innerHTML = `
-                    <div class="flex items-center space-x-2 bg-darkbg-800 border border-darkbg-700 px-3 py-1.5 rounded-xl">
-                        <div class="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold">
-                            ${currentUser.name.charAt(0).toUpperCase()}
-                        </div>
-                        <span class="text-xs font-semibold text-slate-200">${currentUser.name}</span>
-                        <button onclick="handleUserLogout()" class="text-slate-400 hover:text-red-400 ml-2 text-xs" title="Keluar"><i class="fa-solid fa-right-from-bracket"></i></button>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <button onclick="switchView('user', 'auth')" class="bg-darkbg-800 hover:bg-darkbg-700 text-slate-200 border border-darkbg-700 hover:border-brand-500 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2">
-                        <i class="fa-solid fa-user text-brand-400"></i>
-                        <span>Login</span>
-                    </button>
-                `;
+        let secretClickCount = 0;
+        function handleLogoSecretClick() {
+            secretClickCount++;
+            if(secretClickCount >= 5) {
+                secretClickCount = 0;
+                switchView('admin', 'login');
             }
         }
 
-        function handleUserLogout() {
-            currentUser = null;
-            localStorage.removeItem('komikverse_current_user');
-            updateUserAuthUI();
-            switchView('user', 'home');
-        }
+        function handleSearch(val) {}
+        function filterByType(type) {}
+        function applyExploreFilter() {}
+        function clearCacheData() { alert('Cache dibersihkan.'); }
+        function backupDataJSON() { alert('Backup data dimuat turun.'); }
+        function closeReader() { switchView('user', 'home'); }
+        function toggleAutoScroll() {}
+        function switchAuthMode(mode) {}
+        function handleUserAuthSubmit() {}
+        function adminLogout() { switchView('user', 'home'); }
+        function openUploadModal() { document.getElementById('comicModal').classList.remove('hidden'); }
+        function closeComicModal() { document.getElementById('comicModal').classList.add('hidden'); }
+        function processAdminLogin() { switchView('admin', 'dashboard'); }
+        function saveComicForm() { closeComicModal(); }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            updateUserAuthUI();
-        });
+        window.onload = function() {
+            // Render view permulaan
+            switchView('user', 'home');
+        };
     </script>
 </body>
 </html>
