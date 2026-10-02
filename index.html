@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KomikVerse - Masterplan Reader & Admin System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            accent: '#f59e0b'
+                        },
+                        darkbg: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            600: '#475569'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        /* Custom scrollbar for comic reader and lists */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366f1;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-darkbg-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white pb-20 md:pb-0">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="sticky top-0 z-40 bg-darkbg-800/95 backdrop-blur border-b border-darkbg-700/60 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchUserTab('home')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-accent flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                        <i class="fa-solid fa-book-open-reader text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-extrabold bg-gradient-to-r from-white via-slate-200 to-brand-accent bg-clip-text text-transparent">KomikVerse</span>
+                        <span id="modeBadge" class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-500 border border-brand-500/30">User App</span>
+                    </div>
+                </div>
+
+                <!-- Global Search (User Mode) -->
+                <div id="topSearchBar" class="hidden md:flex flex-1 max-w-md mx-8 relative">
+                    <input type="text" id="globalSearchInput" placeholder="Cari judul komik, author, genre..." 
+                        class="w-full bg-darkbg-900 text-slate-200 text-sm rounded-xl pl-10 pr-4 py-2 border border-darkbg-700 focus:outline-none focus:border-brand-500 transition-colors"
+                        oninput="handleGlobalSearch(this.value)">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                    <!-- Dropdown Auto Complete -->
+                    <div id="searchDropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-darkbg-800 border border-darkbg-700 rounded-xl shadow-2xl z-50 max-h-80 overflow-y-auto divide-y divide-darkbg-700/50"></div>
+                </div>
+
+                <!-- Right Side Actions & Mode Switcher -->
+                <div class="flex items-center space-x-3">
+                    <!-- Mode Switcher Button -->
+                    <button id="switchModeBtn" onclick="toggleAppMode()" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-darkbg-700 hover:bg-darkbg-600 border border-slate-600/50 transition-all text-amber-400">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span id="switchModeText">Switch ke Admin Panel</span>
+                    </button>
+
+                    <!-- User Profile Quick Icon -->
+                    <div id="userProfileQuick" class="cursor-pointer" onclick="switchUserTab('me')">
+                        <div class="w-9 h-9 rounded-full bg-slate-700 border border-brand-500/40 flex items-center justify-center text-slate-200 font-bold hover:ring-2 hover:ring-brand-500 transition-all">
+                            <span id="quickAvatarText">U</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- USER APP CONTAINER -->
+        <div id="userAppContainer" class="space-y-6">
+            
+            <!-- Desktop Tab Bar Navigation -->
+            <nav class="hidden md:flex items-center space-x-2 border-b border-darkbg-700 pb-3">
+                <button onclick="switchUserTab('home')" id="tabNav-home" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 text-brand-500 bg-brand-500/10">
+                    <i class="fa-solid fa-house"></i><span>Home</span>
+                </button>
+                <button onclick="switchUserTab('explore')" id="tabNav-explore" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkbg-800">
+                    <i class="fa-solid fa-compass"></i><span>Explore</span>
+                </button>
+                <button onclick="switchUserTab('favorites')" id="tabNav-favorites" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkbg-800">
+                    <i class="fa-solid fa-heart"></i><span>Favorit</span>
+                </button>
+                <button onclick="switchUserTab('me')" id="tabNav-me" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkbg-800">
+                    <i class="fa-solid fa-user"></i><span>Me / Pengaturan</span>
+                </button>
+            </nav>
+
+            <!-- TAB 1: HOME PAGE -->
+            <div id="page-home" class="tab-page space-y-8">
+                <!-- Mobile Search Bar -->
+                <div class="md:hidden relative">
+                    <input type="text" placeholder="Cari judul komik..." class="w-full bg-darkbg-800 text-sm text-slate-200 rounded-xl pl-10 pr-4 py-2.5 border border-darkbg-700 focus:outline-none focus:border-brand-500" oninput="handleGlobalSearch(this.value)">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400"></i>
+                </div>
+
+                <!-- Featured Hero Banner Carousel -->
+                <div class="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 via-darkbg-800 to-brand-900/40 border border-darkbg-700 shadow-2xl p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="space-y-4 max-w-xl text-center md:text-left z-10">
+                        <span class="inline-block text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-brand-500/20 text-brand-500 border border-brand-500/30">
+                            <i class="fa-solid fa-fire mr-1"></i> Featured Comic
+                        </span>
+                        <h1 id="heroTitle" class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">Solo Leveling: Ragnarok</h1>
+                        <p id="heroDesc" class="text-sm text-slate-300 line-clamp-3">
+                            Anomali gerbang misterius kembali melanda dunia. Sung Suho putra satu-satunya Sung Jinwoo harus membangkitkan kekuatan Monarch untuk menyelamatkan manusia.
+                        </p>
+                        <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
+                            <button id="heroReadBtn" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold shadow-lg shadow-brand-600/30 transition-all flex items-center space-x-2">
+                                <i class="fa-solid fa-play"></i><span>Baca Sekarang</span>
+                            </button>
+                            <button id="heroFavBtn" class="px-4 py-2.5 rounded-xl bg-darkbg-700 hover:bg-darkbg-600 text-slate-200 text-sm font-semibold border border-slate-600/50 transition-all flex items-center space-x-2">
+                                <i class="fa-regular fa-heart"></i><span>Favorit</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <img id="heroCover" src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=60" alt="Hero Comic" class="w-40 sm:w-52 h-60 sm:h-72 object-cover rounded-xl shadow-2xl border-2 border-brand-500/30 transform group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                </div>
+
+                <!-- Continue Reading Section (If History Exists) -->
+                <div id="continueReadingSection" class="space-y-4 hidden">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-brand-500"></i>
+                            <span>Lanjut Membaca</span>
+                        </h2>
+                    </div>
+                    <div id="continueReadingList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Filter Quick Buttons (Tipe & Format) -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-layer-group text-brand-accent"></i>
+                            <span>Kategori & Filter Cepat</span>
+                        </h2>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterHomeBy('all')" class="quick-filter-btn active px-4 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white">Semua</button>
+                        <button onclick="filterHomeBy('Manga')" class="quick-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-800 text-slate-300 hover:bg-darkbg-700">Manga</button>
+                        <button onclick="filterHomeBy('Manhwa')" class="quick-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-800 text-slate-300 hover:bg-darkbg-700">Manhwa</button>
+                        <button onclick="filterHomeBy('Manhua')" class="quick-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-800 text-slate-300 hover:bg-darkbg-700">Manhua</button>
+                        <button onclick="filterHomeBy('Webtoon')" class="quick-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-800 text-slate-300 hover:bg-darkbg-700">Webtoon</button>
+                        <button onclick="filterHomeBy('Berwarna')" class="quick-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-800 text-emerald-400 hover:bg-darkbg-700"><i class="fa-solid fa-palette mr-1"></i> Berwarna</button>
+                        <button onclick="filterHomeBy('Hitam Putih')" class="quick-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-800 text-slate-400 hover:bg-darkbg-700"><i class="fa-solid fa-circle-half-stroke mr-1"></i> Hitam Putih</button>
+                    </div>
+                </div>
+
+                <!-- Popular Comics Grid -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-fire-flame-curved text-amber-500"></i>
+                            <span>Komik Populer</span>
+                        </h2>
+                        <button onclick="switchUserTab('explore')" class="text-xs text-brand-500 hover:underline font-semibold">Lihat Semua</button>
+                    </div>
+                    <div id="popularComicsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Latest Updates Section -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-arrows-rotate text-emerald-500"></i>
+                            <span>Rilis & Update Terbaru</span>
+                        </h2>
+                    </div>
+                    <div id="latestComicsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: EXPLORE PAGE -->
+            <div id="page-explore" class="tab-page space-y-6 hidden">
+                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 space-y-4">
+                    <h2 class="text-md font-bold text-slate-200 border-b border-darkbg-700 pb-2">Filter Jelajah Komik</h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Genre Filter -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Genre</label>
+                            <select id="filterGenre" onchange="applyExploreFilter()" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+                                <option value="All">Semua Genre</option>
+                                <option value="Action">Action</option>
+                                <option value="Fantasy">Fantasy</option>
+                                <option value="Romance">Romance</option>
+                                <option value="Adventure">Adventure</option>
+                                <option value="Comedy">Comedy</option>
+                                <option value="Drama">Drama</option>
+                                <option value="Horror">Horror</option>
+                                <option value="Sci-Fi">Sci-Fi</option>
+                            </select>
+                        </div>
+
+                        <!-- Type Filter -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Tipe</label>
+                            <select id="filterType" onchange="applyExploreFilter()" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+                                <option value="All">Semua Tipe</option>
+                                <option value="Manga">Manga (Jepang)</option>
+                                <option value="Manhwa">Manhwa (Korea)</option>
+                                <option value="Manhua">Manhua (China)</option>
+                                <option value="ComicWebtoon">Webtoon</option>
+                            </select>
+                        </div>
+
+                        <!-- Demographics Filter -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Demografis</label>
+                            <select id="filterDemo" onchange="applyExploreFilter()" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+                                <option value="All">Semua Demografis</option>
+                                <option value="Shounen">Shounen</option>
+                                <option value="Shoujo">Shoujo</option>
+                                <option value="Seinen">Seinen</option>
+                                <option value="Josei">Josei</option>
+                            </select>
+                        </div>
+
+                        <!-- Themes Filter -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Tema</label>
+                            <select id="filterTheme" onchange="applyExploreFilter()" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+                                <option value="All">Semua Tema</option>
+                                <option value="Isekai">Isekai</option>
+                                <option value="School">School</option>
+                                <option value="Time Travel">Time Travel</option>
+                                <option value="Martial Arts">Martial Arts</option>
+                                <option value="Reincarnation">Reincarnation</option>
+                                <option value="Supernatural">Supernatural</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explore Results Grid -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span id="exploreResultsCount" class="text-xs text-slate-400 font-semibold">Menampilkan 0 komik</span>
+                    </div>
+                    <div id="exploreComicsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: FAVORITES PAGE -->
+            <div id="page-favorites" class="tab-page space-y-6 hidden">
+                <div class="flex items-center justify-between border-b border-darkbg-700 pb-4">
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-heart text-rose-500"></i>
+                        <span>Komik Favorit Saya</span>
+                    </h2>
+                </div>
+                <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- TAB 4: ME / SETTINGS PAGE -->
+            <div id="page-me" class="tab-page space-y-6 hidden">
+                <!-- User Profile Card -->
+                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-6 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-2xl font-bold text-white shadow-xl">
+                        <span id="meAvatarText">U</span>
+                    </div>
+                    <div class="space-y-1 text-center sm:text-left flex-1">
+                        <h2 id="meUserName" class="text-xl font-bold text-white">Pembaca Setia</h2>
+                        <p id="meUserEmail" class="text-xs text-slate-400">user@komikverse.app</p>
+                        <div class="flex flex-wrap gap-2 pt-2 justify-center sm:justify-start">
+                            <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30">User Standard</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Status: Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences & App Management -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Preferences -->
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 space-y-4">
+                        <h3 class="text-md font-bold text-slate-200 border-b border-darkbg-700 pb-2">Pengaturan Reader</h3>
+                        
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-sm font-semibold text-slate-200">Auto Scroll Mode Default</span>
+                                <p class="text-xs text-slate-400">Otomatis aktifkan scroll saat membaca</p>
+                            </div>
+                            <input type="checkbox" id="prefAutoScroll" onchange="savePreferences()" class="w-5 h-5 accent-brand-500 rounded cursor-pointer">
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-sm font-semibold text-slate-200">Kecepatan Auto Scroll</span>
+                                <p class="text-xs text-slate-400">Atur kecepatan (1-10)</p>
+                            </div>
+                            <input type="number" id="prefScrollSpeed" min="1" max="10" value="3" onchange="savePreferences()" class="w-16 bg-darkbg-900 border border-darkbg-700 text-center text-xs py-1 rounded-lg text-slate-200">
+                        </div>
+                    </div>
+
+                    <!-- Offline Downloads & Storage -->
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 space-y-4">
+                        <h3 class="text-md font-bold text-slate-200 border-b border-darkbg-700 pb-2">Manajemen Cache & Data</h3>
+                        
+                        <div class="flex items-center justify-between">
+                            <button onclick="clearCacheData()" class="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 text-xs font-semibold flex items-center space-x-2">
+                                <i class="fa-solid fa-broom"></i><span>Bersihkan Cache Lokal</span>
+                            </button>
+                            <button onclick="resetToDefaultData()" class="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 text-xs font-semibold flex items-center space-x-2">
+                                <i class="fa-solid fa-rotate-left"></i><span>Reset Data Bawaan</span>
+                            </button>
+                        </div>
+
+                        <div class="pt-2 flex gap-3">
+                            <button onclick="exportUserData()" class="flex-1 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-download"></i><span>Backup Data (JSON)</span>
+                            </button>
+                            <label class="flex-1 py-2 rounded-xl bg-darkbg-700 hover:bg-darkbg-600 text-slate-200 text-xs font-semibold flex items-center justify-center space-x-2 cursor-pointer">
+                                <i class="fa-solid fa-upload"></i><span>Restore Data</span>
+                                <input type="file" id="importFileInput" accept=".json" onchange="importUserData(event)" class="hidden">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Downloads Manager -->
+                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 space-y-4">
+                    <h3 class="text-md font-bold text-slate-200 border-b border-darkbg-700 pb-2 flex items-center justify-between">
+                        <span><i class="fa-solid fa-download mr-2 text-brand-500"></i>Daftar Chapter Terunduh (Offline Reading)</span>
+                        <span id="downloadCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400">0 Items</span>
+                    </h3>
+                    <div id="downloadsManagerList" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: DETAIL KOMIK PAGE -->
+            <div id="page-detail" class="tab-page space-y-8 hidden">
+                <button onclick="switchUserTab('home')" class="text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+                    <i class="fa-solid fa-arrow-left"></i><span>Kembali ke Beranda</span>
+                </button>
+
+                <div id="comicDetailContent" class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-6 md:p-8 space-y-6">
+                    <!-- Dynamically Loaded Comic Details -->
+                </div>
+            </div>
+
+            <!-- VIEW: COMIC READER PAGE -->
+            <div id="page-reader" class="tab-page space-y-6 hidden min-h-screen">
+                <!-- Top Reader Floating Control Bar -->
+                <div class="sticky top-16 z-30 bg-darkbg-800/90 backdrop-blur border-b border-darkbg-700 px-4 py-3 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-xl">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="closeReader()" class="p-2 rounded-lg bg-darkbg-700 hover:bg-darkbg-600 text-slate-300">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <h3 id="readerComicTitle" class="text-sm font-bold text-white line-clamp-1">Title</h3>
+                            <p id="readerChapterTitle" class="text-xs text-brand-400">Chapter X</p>
+                        </div>
+                    </div>
+
+                    <!-- Control Tools -->
+                    <div class="flex items-center space-x-2">
+                        <!-- Auto Scroll Toggle -->
+                        <button id="readerAutoScrollToggle" onclick="toggleAutoScroll()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-700 hover:bg-darkbg-600 text-slate-300 border border-darkbg-600 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-scroll"></i>
+                            <span id="autoScrollLabel">Auto Scroll: OFF</span>
+                        </button>
+
+                        <!-- Speed Regulator -->
+                        <div class="hidden sm:flex items-center space-x-1 bg-darkbg-900 border border-darkbg-700 px-2 py-1 rounded-lg">
+                            <span class="text-[10px] text-slate-400">Speed:</span>
+                            <button onclick="adjustReaderSpeed(-1)" class="text-xs px-1 hover:text-brand-500"><i class="fa-solid fa-minus"></i></button>
+                            <span id="readerSpeedVal" class="text-xs font-bold text-brand-400">3</span>
+                            <button onclick="adjustReaderSpeed(1)" class="text-xs px-1 hover:text-brand-500"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+
+                        <!-- Chapter Selector -->
+                        <select id="readerChapterSelect" onchange="changeChapterFromSelect(this.value)" class="bg-darkbg-900 border border-darkbg-700 text-xs text-slate-200 px-3 py-1.5 rounded-lg focus:outline-none">
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Chapter Pages Container (Continuous Webtoon Scroll) -->
+                <div id="readerPagesContainer" class="max-w-3xl mx-auto space-y-0 shadow-2xl bg-black rounded-lg overflow-hidden my-4 min-h-[600px] flex flex-col items-center">
+                    <!-- Pages dynamically populated -->
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <div class="max-w-3xl mx-auto flex items-center justify-between p-4 bg-darkbg-800 border border-darkbg-700 rounded-xl">
+                    <button id="prevChapterBtn" onclick="navigateChapter('prev')" class="px-4 py-2 rounded-xl bg-darkbg-700 hover:bg-darkbg-600 text-slate-200 text-xs font-semibold flex items-center space-x-2">
+                        <i class="fa-solid fa-chevron-left"></i><span>Chapter Sebelumnya</span>
+                    </button>
+                    <button id="nextChapterBtn" onclick="navigateChapter('next')" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold flex items-center space-x-2">
+                        <span>Chapter Selanjutnya</span><i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ADMIN PANEL CONTAINER -->
+        <div id="adminPanelContainer" class="space-y-6 hidden">
+            
+            <!-- Admin Navigation Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-darkbg-700 pb-4">
+                <div class="flex items-center space-x-2 overflow-x-auto py-1">
+                    <button onclick="switchAdminTab('dashboard')" id="adminNav-dashboard" class="admin-nav-btn px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+                    </button>
+                    <button onclick="switchAdminTab('comics')" id="adminNav-comics" class="admin-nav-btn px-4 py-2 rounded-xl text-xs font-bold bg-darkbg-800 text-slate-400 hover:bg-darkbg-700 flex items-center space-x-2">
+                        <i class="fa-solid fa-book"></i><span>Kelola Komik</span>
+                    </button>
+                    <button onclick="switchAdminTab('categories')" id="adminNav-categories" class="admin-nav-btn px-4 py-2 rounded-xl text-xs font-bold bg-darkbg-800 text-slate-400 hover:bg-darkbg-700 flex items-center space-x-2">
+                        <i class="fa-solid fa-tags"></i><span>Kategori</span>
+                    </button>
+                    <button onclick="switchAdminTab('users')" id="adminNav-users" class="admin-nav-btn px-4 py-2 rounded-xl text-xs font-bold bg-darkbg-800 text-slate-400 hover:bg-darkbg-700 flex items-center space-x-2">
+                        <i class="fa-solid fa-users"></i><span>Kelola User</span>
+                    </button>
+                </div>
+
+                <button onclick="openModal('modalAddComic')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center space-x-2 shadow-lg shadow-emerald-600/20">
+                    <i class="fa-solid fa-plus"></i><span>Tambah Komik Baru</span>
+                </button>
+            </div>
+
+            <!-- ADMIN TAB 1: DASHBOARD STATS -->
+            <div id="adminPage-dashboard" class="admin-tab-page space-y-6">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Total Komik</p>
+                            <h3 id="statTotalComics" class="text-2xl font-black text-white mt-1">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-brand-500/20 text-brand-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Total Chapter</p>
+                            <h3 id="statTotalChapters" class="text-2xl font-black text-white mt-1">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Total User</p>
+                            <h3 id="statTotalUsers" class="text-2xl font-black text-white mt-1">12</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Total Favorit Pembaca</p>
+                            <h3 id="statTotalFavorites" class="text-2xl font-black text-white mt-1">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-heart"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Logs Table -->
+                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-6 space-y-4">
+                    <h3 class="text-md font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-brand-500"></i>
+                        <span>Aktivitas Sistem Terbaru</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300 divide-y divide-darkbg-700">
+                            <thead>
+                                <tr class="text-slate-400 font-semibold bg-darkbg-900/50">
+                                    <th class="p-3">Waktu</th>
+                                    <th class="p-3">Aktivitas</th>
+                                    <th class="p-3">Target/Detail</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminActivityLogs" class="divide-y divide-darkbg-700/50">
+                                <!-- Dynamic logs -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 2: KELOLA KOMIK -->
+            <div id="adminPage-comics" class="admin-tab-page space-y-6 hidden">
+                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-6 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <h3 class="text-md font-bold text-white">Daftar Komik Terdaftar</h3>
+                        <input type="text" placeholder="Filter nama komik..." oninput="filterAdminComicsTable(this.value)" class="bg-darkbg-900 border border-darkbg-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none">
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300 divide-y divide-darkbg-700">
+                            <thead>
+                                <tr class="text-slate-400 font-semibold bg-darkbg-900/50">
+                                    <th class="p-3">Cover</th>
+                                    <th class="p-3">Judul & Author</th>
+                                    <th class="p-3">Tipe / Format</th>
+                                    <th class="p-3">Genre</th>
+                                    <th class="p-3">Chapters</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminComicsTableBody" class="divide-y divide-darkbg-700/50">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 3: KATEGORI -->
+            <div id="adminPage-categories" class="admin-tab-page space-y-6 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Manage Genres -->
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 space-y-4">
+                        <h3 class="text-md font-bold text-white">Daftar Genre</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="newGenreInput" placeholder="Tambah Genre Baru..." class="flex-1 bg-darkbg-900 border border-darkbg-700 text-xs px-3 py-2 rounded-xl text-slate-200 focus:outline-none">
+                            <button onclick="addCategoryItem('genre')" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl">Tambah</button>
+                        </div>
+                        <div id="adminGenreBadgeList" class="flex flex-wrap gap-2 pt-2">
+                            <!-- Populated JS -->
+                        </div>
+                    </div>
+
+                    <!-- Manage Themes -->
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-5 space-y-4">
+                        <h3 class="text-md font-bold text-white">Daftar Tema</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="newThemeInput" placeholder="Tambah Tema Baru..." class="flex-1 bg-darkbg-900 border border-darkbg-700 text-xs px-3 py-2 rounded-xl text-slate-200 focus:outline-none">
+                            <button onclick="addCategoryItem('theme')" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl">Tambah</button>
+                        </div>
+                        <div id="adminThemeBadgeList" class="flex flex-wrap gap-2 pt-2">
+                            <!-- Populated JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB 4: KELOLA USER -->
+            <div id="adminPage-users" class="admin-tab-page space-y-6 hidden">
+                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-6 space-y-4">
+                    <h3 class="text-md font-bold text-white">Manajemen User Aplikasi</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300 divide-y divide-darkbg-700">
+                            <thead>
+                                <tr class="text-slate-400 font-semibold bg-darkbg-900/50">
+                                    <th class="p-3">User ID</th>
+                                    <th class="p-3">Username</th>
+                                    <th class="p-3">Role</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody" class="divide-y divide-darkbg-700/50">
+                                <!-- Dynamic user rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- MOBILE BOTTOM NAVBAR (User Mode Only) -->
+    <div id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-darkbg-800/95 backdrop-blur border-t border-darkbg-700 px-2 py-2 flex items-center justify-around shadow-2xl">
+        <button onclick="switchUserTab('home')" id="mobNav-home" class="flex flex-col items-center text-brand-500">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Home</span>
+        </button>
+        <button onclick="switchUserTab('explore')" id="mobNav-explore" class="flex flex-col items-center text-slate-400">
+            <i class="fa-solid fa-compass text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Explore</span>
+        </button>
+        <button onclick="switchUserTab('favorites')" id="mobNav-favorites" class="flex flex-col items-center text-slate-400">
+            <i class="fa-solid fa-heart text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Favorit</span>
+        </button>
+        <button onclick="switchUserTab('me')" id="mobNav-me" class="flex flex-col items-center text-slate-400">
+            <i class="fa-solid fa-user text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Me</span>
+        </button>
+    </div>
+
+    <!-- MODAL: ADD / EDIT COMIC -->
+    <div id="modalAddComic" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-darkbg-700 pb-3">
+                <h3 id="modalComicFormTitle" class="text-lg font-bold text-white">Upload Komik Baru</h3>
+                <button onclick="closeModal('modalAddComic')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form id="comicForm" onsubmit="saveComicForm(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="formComicId">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Judul Komik *</label>
+                        <input type="text" id="formTitle" required class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Cover Image URL *</label>
+                        <input type="url" id="formCover" required placeholder="https://images.unsplash.com/..." class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Author / Penulis *</label>
+                        <input type="text" id="formAuthor" required class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Artist / Ilustrator</label>
+                        <input type="text" id="formArtist" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Tipe</label>
+                        <select id="formType" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200">
+                            <option value="Manhwa">Manhwa</option>
+                            <option value="Manga">Manga</option>
+                            <option value="Manhua">Manhua</option>
+                            <option value="ComicWebtoon">Webtoon</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Format</label>
+                        <select id="formFormat" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200">
+                            <option value="Berwarna">Berwarna</option>
+                            <option value="Hitam Putih">Hitam Putih</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Demografis</label>
+                        <select id="formDemographic" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200">
+                            <option value="Shounen">Shounen</option>
+                            <option value="Shoujo">Shoujo</option>
+                            <option value="Seinen">Seinen</option>
+                            <option value="Josei">Josei</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Status</label>
+                        <select id="formStatus" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200">
+                            <option value="Ongoing">Ongoing</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Genre (Pisahkan Koma)</label>
+                        <input type="text" id="formGenres" placeholder="Action, Fantasy, Drama" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Tema (Pisahkan Koma)</label>
+                        <input type="text" id="formThemes" placeholder="Isekai, Reincarnation" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Deskripsi / Sinopsis</label>
+                    <textarea id="formDescription" rows="3" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl p-2.5 text-slate-200 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeModal('modalAddComic')" class="px-4 py-2 rounded-xl bg-darkbg-700 text-slate-300">Batal</button>
+                    <button type="submit" class="px-6 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold">Simpan Komik</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: KELOLA CHAPTERS -->
+    <div id="modalManageChapters" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-darkbg-700 pb-3">
+                <h3 id="modalChapterComicTitle" class="text-lg font-bold text-white">Kelola Chapter</h3>
+                <button onclick="closeModal('modalManageChapters')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- Form Add New Chapter -->
+            <form id="chapterForm" onsubmit="saveChapterForm(event)" class="bg-darkbg-900 p-4 rounded-xl space-y-3 text-xs border border-darkbg-700">
+                <input type="hidden" id="formChapterComicId">
+                <h4 class="font-bold text-slate-200">Tambah Chapter Baru</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Nomor Chapter</label>
+                        <input type="number" id="formChapterNum" step="0.1" required class="w-full bg-darkbg-800 border border-darkbg-700 rounded-lg p-2 text-slate-200">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-slate-400 mb-1">Judul Chapter (Opsional)</label>
+                        <input type="text" id="formChapterTitle" placeholder="Contoh: Awal Kebangkitan" class="w-full bg-darkbg-800 border border-darkbg-700 rounded-lg p-2 text-slate-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Halaman Gambar URLs (Satu URL per baris)</label>
+                    <textarea id="formChapterPages" rows="4" placeholder="https://images.unsplash.com/photo-1&#10;https://images.unsplash.com/photo-2" required class="w-full bg-darkbg-800 border border-darkbg-700 rounded-lg p-2 text-slate-200"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl">Tambah Chapter</button>
+            </form>
+
+            <!-- List of existing chapters -->
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-400">Daftar Chapter Terupload</h4>
+                <div id="modalChapterList" class="space-y-2 max-h-60 overflow-y-auto">
+                    <!-- Populated JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC & STATE MANAGEMENT -->
+    <script>
+        // CORE APPLICATION STATE
+        let appState = {
+            mode: 'user', // 'user' or 'admin'
+            currentTab: 'home',
+            adminTab: 'dashboard',
+            currentComicId: null,
+            currentChapterId: null,
+            autoScrollActive: false,
+            autoScrollInterval: null,
+            scrollSpeed: 3,
+            preferences: {
+                autoScrollDefault: false,
+                speed: 3
+            },
+            comics: [],
+            genres: ['Action', 'Fantasy', 'Romance', 'Adventure', 'Comedy', 'Drama', 'Horror', 'Sci-Fi'],
+            themes: ['Isekai', 'School', 'Time Travel', 'Martial Arts', 'Reincarnation', 'Supernatural'],
+            favorites: [], // comicIds
+            readingHistory: [], // [{ comicId, chapterId, progressPercent, lastReadDate }]
+            downloads: [], // [{ comicId, chapterId, date }]
+            activityLogs: []
+        };
+
+        // SEED DATA INITIALIZER
+        const DEFAULT_SEED_COMICS = [
+            {
+                id: 'c1',
+                title: 'Solo Leveling: Ragnarok',
+                cover: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=60',
+                author: 'Chugong / Redice Studio',
+                artist: 'DUBU',
+                type: 'Manhwa',
+                format: 'Berwarna',
+                demographic: 'Shounen',
+                status: 'Ongoing',
+                rating: 4.9,
+                views: 124500,
+                genres: ['Action', 'Fantasy', 'Adventure'],
+                themes: ['Reincarnation', 'Supernatural'],
+                description: 'Dunia kembali dalam ancaman besar para Outer Gods. Sung Suho putra Hunter Sung Jinwoo menyadari warisan darah kekuatannya untuk membela kelangsungan umat manusia.',
+                chapters: [
+                    { id: 'c1-ch1', number: 1, title: 'Warisan Sang Shadow Monarch', releaseDate: '2024-01-10', pages: ['https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800', 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800'] },
+                    { id: 'c1-ch2', number: 2, title: 'Ujian Pertama Suho', releaseDate: '2024-01-17', pages: ['https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800', 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800'] }
+                ]
+            },
+            {
+                id: 'c2',
+                title: 'One Piece: Final Saga',
+                cover: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=60',
+                author: 'Eiichiro Oda',
+                artist: 'Eiichiro Oda',
+                type: 'Manga',
+                format: 'Hitam Putih',
+                demographic: 'Shounen',
+                status: 'Ongoing',
+                rating: 4.95,
+                views: 289000,
+                genres: ['Action', 'Adventure', 'Comedy'],
+                themes: ['Supernatural'],
+                description: 'Luffy dan Kru Topi Jerami berlayar menuju pulau terakhir Laugh Tale untuk menemukan harta karun One Piece dan menguak rahasia Abad Kekosongan.',
+                chapters: [
+                    { id: 'c2-ch1100', number: 1100, title: 'Pulau Masa Depan Egghead', releaseDate: '2024-02-01', pages: ['https://images.unsplash.com/photo-1563089145-599997674d42?w=800', 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800'] }
+                ]
+            },
+            {
+                id: 'c3',
+                title: 'Jujutsu Kaisen',
+                cover: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500&auto=format&fit=crop&q=60',
+                author: 'Gege Akutami',
+                artist: 'Gege Akutami',
+                type: 'Manga',
+                format: 'Hitam Putih',
+                demographic: 'Shounen',
+                status: 'Completed',
+                rating: 4.8,
+                views: 198000,
+                genres: ['Action', 'Horror', 'Supernatural'],
+                themes: ['School', 'Supernatural'],
+                description: 'Yuji Itadori menelan jari terkutuk Ryomen Sukuna dan memasuki dunia Penyihir Jujutsu demi menyelamatkan orang lain dari ancaman monster kutukan.',
+                chapters: [
+                    { id: 'c3-ch1', number: 1, title: 'Ryomen Sukuna', releaseDate: '2023-05-12', pages: ['https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800', 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800'] }
+                ]
+            },
+            {
+                id: 'c4',
+                title: 'Tower of God',
+                cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=60',
+                author: 'SIU',
+                artist: 'SIU',
+                type: 'ComicWebtoon',
+                format: 'Berwarna',
+                demographic: 'Shounen',
+                status: 'Ongoing',
+                rating: 4.75,
+                views: 154000,
+                genres: ['Action', 'Fantasy', 'Drama'],
+                themes: ['Supernatural'],
+                description: 'Apa yang kamu inginkan? Kekayaan, kejayaan, otoritas? Semua itu ada di puncak Menara. Kisah Bam memanjat Menara demi mengejar Rachel.',
+                chapters: [
+                    { id: 'c4-ch1', number: 1, title: 'Lantai Pertama: Ujian Headon', releaseDate: '2023-08-20', pages: ['https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800'] }
+                ]
+            }
+        ];
+
+        // ON LOAD INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            renderUserHome();
+            renderExplorePage();
+            renderFavoritesPage();
+            renderAdminDashboard();
+            renderAdminComicsTable();
+            renderAdminCategories();
+            renderAdminUsers();
+            updateDownloadsManagerUI();
+            logActivity('System Startup', 'Aplikasi dimuat successfully', 'Success');
+        });
+
+        // LOCALSTORAGE PERSISTENCE
+        function saveToLocalStorage() {
+            localStorage.setItem('komikverse_state', JSON.stringify(appState));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('komikverse_state');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    appState = { ...appState, ...parsed };
+                } catch(e) {
+                    console.error('Failed parsing state', e);
+                    appState.comics = DEFAULT_SEED_COMICS;
+                }
+            } else {
+                appState.comics = DEFAULT_SEED_COMICS;
+                saveToLocalStorage();
+            }
+        }
+
+        function logActivity(action, target, status = 'Success') {
+            const log = {
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                action,
+                target,
+                status
+            };
+            appState.activityLogs.unshift(log);
+            if (appState.activityLogs.length > 20) appState.activityLogs.pop();
+            saveToLocalStorage();
+            renderAdminDashboard();
+        }
+
+        // MODE & TAB SWITCHERS
+        function toggleAppMode() {
+            if (appState.mode === 'user') {
+                appState.mode = 'admin';
+                document.getElementById('userAppContainer').classList.add('hidden');
+                document.getElementById('adminPanelContainer').classList.remove('hidden');
+                document.getElementById('mobileBottomNav').classList.add('hidden');
+                document.getElementById('topSearchBar').classList.add('hidden');
+                document.getElementById('modeBadge').innerText = 'Admin Panel';
+                document.getElementById('modeBadge').className = 'ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30';
+                document.getElementById('switchModeText').innerText = 'Switch ke User App';
+                switchAdminTab('dashboard');
+            } else {
+                appState.mode = 'user';
+                document.getElementById('userAppContainer').classList.remove('hidden');
+                document.getElementById('adminPanelContainer').classList.add('hidden');
+                document.getElementById('mobileBottomNav').classList.remove('hidden');
+                document.getElementById('topSearchBar').classList.remove('hidden');
+                document.getElementById('modeBadge').innerText = 'User App';
+                document.getElementById('modeBadge').className = 'ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-500 border border-brand-500/30';
+                document.getElementById('switchModeText').innerText = 'Switch ke Admin Panel';
+                switchUserTab('home');
+            }
+        }
+
+        function switchUserTab(tabName) {
+            appState.currentTab = tabName;
+            document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
+            
+            const targetPage = document.getElementById(`page-${tabName}`);
+            if (targetPage) targetPage.classList.remove('hidden');
+
+            // Nav Highlight Update
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkbg-800';
+            });
+            const activeNav = document.getElementById(`tabNav-${tabName}`);
+            if (activeNav) activeNav.className = 'tab-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 text-brand-500 bg-brand-500/10';
+
+            if (tabName === 'favorites') renderFavoritesPage();
+            if (tabName === 'me') updateMePageUI();
+            if (tabName === 'home') renderUserHome();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchAdminTab(tabName) {
+            appState.adminTab = tabName;
+            document.querySelectorAll('.admin-tab-page').forEach(page => page.classList.add('hidden'));
+            
+            const target = document.getElementById(`adminPage-${tabName}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+                btn.className = 'admin-nav-btn px-4 py-2 rounded-xl text-xs font-bold bg-darkbg-800 text-slate-400 hover:bg-darkbg-700 flex items-center space-x-2';
+            });
+            const activeBtn = document.getElementById(`adminNav-${tabName}`);
+            if (activeBtn) activeBtn.className = 'admin-nav-btn px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white flex items-center space-x-2';
+        }
+
+        // HOME RENDERERS
+        function renderUserHome() {
+            renderHeroBanner();
+            renderContinueReading();
+            renderPopularComics();
+            renderLatestComics();
+        }
+
+        function renderHeroBanner() {
+            if (!appState.comics.length) return;
+            const featured = appState.comics[0];
+            document.getElementById('heroTitle').innerText = featured.title;
+            document.getElementById('heroDesc').innerText = featured.description;
+            document.getElementById('heroCover').src = featured.cover;
+            
+            document.getElementById('heroReadBtn').onclick = () => openComicDetail(featured.id);
+            document.getElementById('heroFavBtn').onclick = () => toggleFavorite(featured.id);
+        }
+
+        function renderContinueReading() {
+            const container = document.getElementById('continueReadingList');
+            const section = document.getElementById('continueReadingSection');
+
+            if (!appState.readingHistory.length) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            container.innerHTML = appState.readingHistory.map(hist => {
+                const comic = appState.comics.find(c => c.id === hist.comicId);
+                if (!comic) return '';
+                const chapter = comic.chapters.find(ch => ch.id === hist.chapterId) || comic.chapters[0];
+
+                return `
+                    <div class="bg-darkbg-800 border border-darkbg-700 rounded-xl p-3 flex space-x-3 items-center shadow-md">
+                        <img src="${comic.cover}" class="w-14 h-20 object-cover rounded-lg">
+                        <div class="flex-1 space-y-1">
+                            <h4 class="text-xs font-bold text-white line-clamp-1">${comic.title}</h4>
+                            <p class="text-[11px] text-brand-400">Ch. ${chapter ? chapter.number : '1'} ${chapter?.title ? '- ' + chapter.title : ''}</p>
+                            <div class="w-full bg-darkbg-900 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-brand-500 h-1.5 rounded-full" style="width: ${hist.progressPercent || 30}%"></div>
+                            </div>
+                            <button onclick="openComicReader('${comic.id}', '${chapter.id}')" class="text-[10px] font-bold text-emerald-400 hover:underline flex items-center space-x-1 pt-1">
+                                <i class="fa-solid fa-play text-[8px]"></i><span>Lanjutkan Baca (${hist.progressPercent || 30}%)</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function createComicCard(comic) {
+            const isFav = appState.favorites.includes(comic.id);
+            return `
+                <div class="group relative bg-darkbg-800 rounded-xl overflow-hidden border border-darkbg-700 shadow-lg hover:border-brand-500/50 transition-all flex flex-col cursor-pointer" onclick="openComicDetail('${comic.id}')">
+                    <div class="relative aspect-[3/4] overflow-hidden">
+                        <img src="${comic.cover}" alt="${comic.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <span class="absolute top-2 left-2 text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-black/70 backdrop-blur text-white border border-white/20">
+                            ${comic.type}
+                        </span>
+                        <button onclick="event.stopPropagation(); toggleFavorite('${comic.id}')" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur flex items-center justify-center text-xs ${isFav ? 'text-rose-500' : 'text-slate-300 hover:text-rose-400'}">
+                            <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                        </button>
+                        <span class="absolute bottom-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/90 text-black flex items-center space-x-1">
+                            <i class="fa-solid fa-star text-[9px]"></i><span>${comic.rating || 4.8}</span>
+                        </span>
+                    </div>
+                    <div class="p-3 space-y-1 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-xs font-bold text-white line-clamp-1 group-hover:text-brand-400 transition-colors">${comic.title}</h3>
+                            <p class="text-[10px] text-slate-400 line-clamp-1">${comic.author}</p>
+                        </div>
+                        <div class="pt-1 flex items-center justify-between text-[10px] text-slate-400 border-t border-darkbg-700/60">
+                            <span>Ch. ${comic.chapters?.length ? comic.chapters[comic.chapters.length - 1].number : '0'}</span>
+                            <span class="text-emerald-400 font-semibold">${comic.status}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPopularComics(filterType = 'all') {
+            const container = document.getElementById('popularComicsGrid');
+            let list = [...appState.comics];
+
+            if (filterType !== 'all') {
+                if (filterType === 'Berwarna' || filterType === 'Hitam Putih') {
+                    list = list.filter(c => c.format === filterType);
+                } else {
+                    list = list.filter(c => c.type === filterType);
+                }
+            }
+
+            if (!list.length) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-slate-400">Tidak ada komik ditemukan untuk filter ini.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(createComicCard).join('');
+        }
+
+        function renderLatestComics() {
+            const container = document.getElementById('latestComicsGrid');
+            container.innerHTML = appState.comics.map(createComicCard).join('');
+        }
+
+        function filterHomeBy(filterKey) {
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+                btn.className = 'quick-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-800 text-slate-300 hover:bg-darkbg-700';
+            });
+            event.target.className = 'quick-filter-btn active px-4 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white';
+            renderPopularComics(filterKey);
+        }
+
+        // EXPLORE PAGE LOGIC
+        function renderExplorePage() {
+            applyExploreFilter();
+        }
+
+        function applyExploreFilter() {
+            const genre = document.getElementById('filterGenre').value;
+            const type = document.getElementById('filterType').value;
+            const demo = document.getElementById('filterDemo').value;
+            const theme = document.getElementById('filterTheme').value;
+
+            let results = appState.comics.filter(c => {
+                const matchGenre = genre === 'All' || c.genres?.includes(genre);
+                const matchType = type === 'All' || c.type === type;
+                const matchDemo = demo === 'All' || c.demographic === demo;
+                const matchTheme = theme === 'All' || c.themes?.includes(theme);
+                return matchGenre && matchType && matchDemo && matchTheme;
+            });
+
+            document.getElementById('exploreResultsCount').innerText = `Menampilkan ${results.length} komik`;
+            const container = document.getElementById('exploreComicsGrid');
+
+            if (!results.length) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-xs text-slate-400">Tidak ada komik yang cocok dengan kombinasi filter ini.</div>`;
+                return;
+            }
+
+            container.innerHTML = results.map(createComicCard).join('');
+        }
+
+        // GLOBAL SEARCH
+        function handleGlobalSearch(query) {
+            const dropdown = document.getElementById('searchDropdown');
+            if (!query.trim()) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const matched = appState.comics.filter(c => 
+                c.title.toLowerCase().includes(query.toLowerCase()) || 
+                c.author.toLowerCase().includes(query.toLowerCase()) ||
+                c.genres?.some(g => g.toLowerCase().includes(query.toLowerCase()))
+            );
+
+            if (!matched.length) {
+                dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">Komik tidak ditemukan.</div>`;
+            } else {
+                dropdown.innerHTML = matched.map(c => `
+                    <div onclick="openComicDetail('${c.id}'); document.getElementById('searchDropdown').classList.add('hidden');" class="p-2.5 hover:bg-darkbg-700 flex items-center space-x-3 cursor-pointer">
+                        <img src="${c.cover}" class="w-10 h-12 object-cover rounded">
+                        <div>
+                            <h4 class="text-xs font-bold text-white">${c.title}</h4>
+                            <p class="text-[10px] text-slate-400">${c.type} • ${c.author}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            dropdown.classList.remove('hidden');
+        }
+
+        // FAVORITES LOGIC
+        function toggleFavorite(comicId) {
+            const idx = appState.favorites.indexOf(comicId);
+            if (idx > -1) {
+                appState.favorites.splice(idx, 1);
+                logActivity('User Favorite', `Menghapus komik dari favorit`, 'Info');
+            } else {
+                appState.favorites.push(comicId);
+                logActivity('User Favorite', `Menambahkan komik ke favorit`, 'Success');
+            }
+            saveToLocalStorage();
+            renderUserHome();
+            if (appState.currentTab === 'favorites') renderFavoritesPage();
+            if (appState.currentComicId) openComicDetail(appState.currentComicId);
+        }
+
+        function renderFavoritesPage() {
+            const container = document.getElementById('favoritesGrid');
+            const favComics = appState.comics.filter(c => appState.favorites.includes(c.id));
+
+            if (!favComics.length) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-xs text-slate-400">Belum ada komik favorit yang disimpan.</div>`;
+                return;
+            }
+
+            container.innerHTML = favComics.map(createComicCard).join('');
+        }
+
+        // COMIC DETAIL VIEW
+        function openComicDetail(comicId) {
+            appState.currentComicId = comicId;
+            const comic = appState.comics.find(c => c.id === comicId);
+            if (!comic) return;
+
+            switchUserTab('detail');
+            const container = document.getElementById('comicDetailContent');
+            const isFav = appState.favorites.includes(comic.id);
+
+            const firstChapter = comic.chapters?.[0];
+            const lastChapter = comic.chapters?.length ? comic.chapters[comic.chapters.length - 1] : null;
+
+            container.innerHTML = `
+                <div class="flex flex-col md:flex-row gap-6">
+                    <img src="${comic.cover}" alt="${comic.title}" class="w-48 h-68 object-cover rounded-xl shadow-2xl mx-auto md:mx-0 border-2 border-darkbg-700">
+                    
+                    <div class="flex-1 space-y-4">
+                        <div class="space-y-1">
+                            <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-400 font-semibold border border-brand-500/30">${comic.type}</span>
+                            <h1 class="text-2xl font-extrabold text-white">${comic.title}</h1>
+                            <p class="text-xs text-slate-400">Penulis: <span class="text-slate-200 font-medium">${comic.author}</span> | Ilustrator: <span class="text-slate-200 font-medium">${comic.artist || comic.author}</span></p>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <span class="px-2.5 py-1 bg-darkbg-900 rounded-lg text-slate-300">Format: ${comic.format}</span>
+                            <span class="px-2.5 py-1 bg-darkbg-900 rounded-lg text-slate-300">Demografis: ${comic.demographic}</span>
+                            <span class="px-2.5 py-1 bg-darkbg-900 rounded-lg text-emerald-400 font-semibold">Status: ${comic.status}</span>
+                            <span class="px-2.5 py-1 bg-amber-500/20 text-amber-400 rounded-lg font-bold"><i class="fa-solid fa-star mr-1"></i>${comic.rating || 4.8}</span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            ${(comic.genres || []).map(g => `<span class="text-[10px] px-2 py-0.5 bg-brand-600/20 text-brand-300 rounded border border-brand-500/20">${g}</span>`).join('')}
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed">${comic.description}</p>
+
+                        <div class="flex flex-wrap gap-3 pt-2">
+                            ${firstChapter ? `
+                                <button onclick="openComicReader('${comic.id}', '${firstChapter.id}')" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold flex items-center space-x-2">
+                                    <i class="fa-solid fa-play"></i><span>Baca Ch. ${firstChapter.number}</span>
+                                </button>
+                            ` : ''}
+                            
+                            ${lastChapter && lastChapter !== firstChapter ? `
+                                <button onclick="openComicReader('${comic.id}', '${lastChapter.id}')" class="px-5 py-2.5 rounded-xl bg-darkbg-700 hover:bg-darkbg-600 text-slate-200 text-xs font-bold flex items-center space-x-2 border border-slate-600/50">
+                                    <i class="fa-solid fa-forward"></i><span>Baca Terbaru (Ch. ${lastChapter.number})</span>
+                                </button>
+                            ` : ''}
+
+                            <button onclick="toggleFavorite('${comic.id}')" class="px-4 py-2.5 rounded-xl ${isFav ? 'bg-rose-600 text-white' : 'bg-darkbg-700 text-slate-300'} text-xs font-bold flex items-center space-x-2">
+                                <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                                <span>${isFav ? 'Tersimpan' : 'Tambah Favorit'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chapter List -->
+                <div class="space-y-3 pt-6 border-t border-darkbg-700">
+                    <h3 class="text-md font-bold text-white flex items-center justify-between">
+                        <span>Daftar Chapter (${comic.chapters?.length || 0})</span>
+                    </h3>
+
+                    <div class="space-y-2">
+                        ${(comic.chapters || []).map(ch => {
+                            const isDownloaded = appState.downloads.some(d => d.comicId === comic.id && d.chapterId === ch.id);
+                            return `
+                                <div class="bg-darkbg-900 border border-darkbg-700/80 rounded-xl p-3 flex items-center justify-between hover:border-brand-500/40 transition-colors">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-white">Chapter ${ch.number} ${ch.title ? '- ' + ch.title : ''}</h4>
+                                        <p class="text-[10px] text-slate-400">Rilis: ${ch.releaseDate || 'Terbaru'}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="downloadChapter('${comic.id}', '${ch.id}')" class="p-2 text-xs rounded-lg ${isDownloaded ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-400 hover:text-white bg-darkbg-800'}">
+                                            <i class="fa-solid ${isDownloaded ? 'fa-circle-check' : 'fa-download'}"></i>
+                                        </button>
+                                        <button onclick="openComicReader('${comic.id}', '${ch.id}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-lg">
+                                            Baca
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // COMIC READER ENGINE
+        function openComicReader(comicId, chapterId) {
+            appState.currentComicId = comicId;
+            appState.currentChapterId = chapterId;
+
+            const comic = appState.comics.find(c => c.id === comicId);
+            if (!comic) return;
+
+            const chapter = comic.chapters.find(ch => ch.id === chapterId) || comic.chapters[0];
+            if (!chapter) return;
+
+            switchUserTab('reader');
+
+            document.getElementById('readerComicTitle').innerText = comic.title;
+            document.getElementById('readerChapterTitle').innerText = `Chapter ${chapter.number} - ${chapter.title || ''}`;
+
+            // Populate chapter selector
+            const select = document.getElementById('readerChapterSelect');
+            select.innerHTML = comic.chapters.map(ch => `
+                <option value="${ch.id}" ${ch.id === chapterId ? 'selected' : ''}>Ch. ${ch.number}</option>
+            `).join('');
+
+            // Render pages
+            const pagesContainer = document.getElementById('readerPagesContainer');
+            pagesContainer.innerHTML = (chapter.pages || []).map((pageUrl, idx) => `
+                <img src="${pageUrl}" alt="Page ${idx + 1}" class="w-full h-auto object-cover border-b border-darkbg-900" loading="lazy">
+            `).join('');
+
+            // Save reading history progress
+            saveReadingProgress(comicId, chapterId, 50);
+            logActivity('User Reading', `Membaca ${comic.title} Ch. ${chapter.number}`, 'Success');
+        }
+
+        function closeReader() {
+            stopAutoScroll();
+            if (appState.currentComicId) openComicDetail(appState.currentComicId);
+            else switchUserTab('home');
+        }
+
+        function changeChapterFromSelect(chapterId) {
+            openComicReader(appState.currentComicId, chapterId);
+        }
+
+        function navigateChapter(direction) {
+            const comic = appState.comics.find(c => c.id === appState.currentComicId);
+            if (!comic) return;
+
+            const currIdx = comic.chapters.findIndex(ch => ch.id === appState.currentChapterId);
+            if (direction === 'next' && currIdx < comic.chapters.length - 1) {
+                openComicReader(comic.id, comic.chapters[currIdx + 1].id);
+            } else if (direction === 'prev' && currIdx > 0) {
+                openComicReader(comic.id, comic.chapters[currIdx - 1].id);
+            }
+        }
+
+        function toggleAutoScroll() {
+            if (appState.autoScrollActive) {
+                stopAutoScroll();
+            } else {
+                startAutoScroll();
+            }
+        }
+
+        function startAutoScroll() {
+            appState.autoScrollActive = true;
+            document.getElementById('autoScrollLabel').innerText = 'Auto Scroll: ON';
+            document.getElementById('readerAutoScrollToggle').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white flex items-center space-x-1.5';
+
+            if (appState.autoScrollInterval) clearInterval(appState.autoScrollInterval);
+
+            appState.autoScrollInterval = setInterval(() => {
+                window.scrollBy({ top: appState.scrollSpeed * 2, behavior: 'smooth' });
+            }, 100);
+        }
+
+        function stopAutoScroll() {
+            appState.autoScrollActive = false;
+            document.getElementById('autoScrollLabel').innerText = 'Auto Scroll: OFF';
+            document.getElementById('readerAutoScrollToggle').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-darkbg-700 hover:bg-darkbg-600 text-slate-300 border border-darkbg-600 flex items-center space-x-1.5';
+
+            if (appState.autoScrollInterval) clearInterval(appState.autoScrollInterval);
+        }
+
+        function adjustReaderSpeed(delta) {
+            appState.scrollSpeed = Math.max(1, Math.min(10, appState.scrollSpeed + delta));
+            document.getElementById('readerSpeedVal').innerText = appState.scrollSpeed;
+            if (appState.autoScrollActive) startAutoScroll();
+        }
+
+        function saveReadingProgress(comicId, chapterId, percent) {
+            const existingIdx = appState.readingHistory.findIndex(h => h.comicId === comicId);
+            if (existingIdx > -1) {
+                appState.readingHistory[existingIdx] = { comicId, chapterId, progressPercent: percent, lastReadDate: new Date().toISOString() };
+            } else {
+                appState.readingHistory.unshift({ comicId, chapterId, progressPercent: percent, lastReadDate: new Date().toISOString() });
+            }
+            saveToLocalStorage();
+        }
+
+        // DOWNLOAD SIMULATION
+        function downloadChapter(comicId, chapterId) {
+            const exists = appState.downloads.some(d => d.comicId === comicId && d.chapterId === chapterId);
+            if (!exists) {
+                appState.downloads.push({ comicId, chapterId, date: new Date().toLocaleDateString('id-ID') });
+                logActivity('User Download', `Mengunduh chapter offline`, 'Success');
+                saveToLocalStorage();
+                updateDownloadsManagerUI();
+                if (appState.currentComicId) openComicDetail(comicId);
+            }
+        }
+
+        function updateDownloadsManagerUI() {
+            document.getElementById('downloadCountBadge').innerText = `${appState.downloads.length} Items`;
+            const container = document.getElementById('downloadsManagerList');
+
+            if (!appState.downloads.length) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada chapter terunduh.</p>`;
+                return;
+            }
+
+            container.innerHTML = appState.downloads.map(dl => {
+                const comic = appState.comics.find(c => c.id === dl.comicId);
+                const chapter = comic?.chapters.find(ch => ch.id === dl.chapterId);
+                return `
+                    <div class="p-2.5 bg-darkbg-900 rounded-xl flex items-center justify-between text-xs border border-darkbg-700">
+                        <div>
+                            <h4 class="font-bold text-white">${comic?.title || 'Komik'}</h4>
+                            <p class="text-[10px] text-brand-400">Chapter ${chapter?.number || '1'} • Offline</p>
+                        </div>
+                        <button onclick="removeDownload('${dl.comicId}', '${dl.chapterId}')" class="text-rose-400 hover:text-rose-300 text-xs">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeDownload(comicId, chapterId) {
+            appState.downloads = appState.downloads.filter(d => !(d.comicId === comicId && d.chapterId === chapterId));
+            saveToLocalStorage();
+            updateDownloadsManagerUI();
+        }
+
+        // PREFERENCES & BACKUP
+        function updateMePageUI() {
+            document.getElementById('prefAutoScroll').checked = appState.preferences.autoScrollDefault;
+            document.getElementById('prefScrollSpeed').value = appState.preferences.speed;
+            updateDownloadsManagerUI();
+        }
+
+        function savePreferences() {
+            appState.preferences.autoScrollDefault = document.getElementById('prefAutoScroll').checked;
+            appState.preferences.speed = parseInt(document.getElementById('prefScrollSpeed').value) || 3;
+            appState.scrollSpeed = appState.preferences.speed;
+            saveToLocalStorage();
+        }
+
+        function clearCacheData() {
+            appState.readingHistory = [];
+            saveToLocalStorage();
+            renderContinueReading();
+            logActivity('System Cache', 'Membersihkan riwayat & data sementara', 'Info');
+        }
+
+        function resetToDefaultData() {
+            appState.comics = DEFAULT_SEED_COMICS;
+            appState.favorites = [];
+            appState.readingHistory = [];
+            appState.downloads = [];
+            saveToLocalStorage();
+            renderUserHome();
+            logActivity('System Reset', 'Mengembalikan data ke pengaturan awal', 'Warning');
+        }
+
+        function exportUserData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `komikverse_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importUserData(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function (e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    appState = { ...appState, ...imported };
+                    saveToLocalStorage();
+                    renderUserHome();
+                    logActivity('System Restore', 'Memulihkan data dari JSON', 'Success');
+                } catch(err) {
+                    console.error('Failed importing JSON', err);
+                }
+            };
+            fileReader.readAsText(event.target.files[0]);
+        }
+
+        // ADMIN MANAGEMENT ENGINE
+        function renderAdminDashboard() {
+            document.getElementById('statTotalComics').innerText = appState.comics.length;
+            const totalCh = appState.comics.reduce((acc, c) => acc + (c.chapters?.length || 0), 0);
+            document.getElementById('statTotalChapters').innerText = totalCh;
+            document.getElementById('statTotalFavorites').innerText = appState.favorites.length;
+
+            const logsContainer = document.getElementById('adminActivityLogs');
+            logsContainer.innerHTML = appState.activityLogs.map(log => `
+                <tr class="hover:bg-darkbg-900/30">
+                    <td class="p-3 text-slate-400">${log.time}</td>
+                    <td class="p-3 font-semibold text-white">${log.action}</td>
+                    <td class="p-3 text-slate-300">${log.target}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">${log.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAdminComicsTable(filterQuery = '') {
+            const container = document.getElementById('adminComicsTableBody');
+            let list = appState.comics;
+
+            if (filterQuery) {
+                list = list.filter(c => c.title.toLowerCase().includes(filterQuery.toLowerCase()));
+            }
+
+            container.innerHTML = list.map(comic => `
+                <tr class="hover:bg-darkbg-900/30">
+                    <td class="p-3">
+                        <img src="${comic.cover}" class="w-10 h-12 object-cover rounded">
+                    </td>
+                    <td class="p-3">
+                        <div class="font-bold text-white">${comic.title}</div>
+                        <div class="text-slate-400 text-[10px]">${comic.author}</div>
+                    </td>
+                    <td class="p-3">
+                        <div>${comic.type}</div>
+                        <div class="text-[10px] text-slate-400">${comic.format}</div>
+                    </td>
+                    <td class="p-3 text-slate-400">${(comic.genres || []).join(', ')}</td>
+                    <td class="p-3 font-bold text-brand-400">${comic.chapters?.length || 0} Ch.</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 font-semibold">${comic.status}</span></td>
+                    <td class="p-3 text-right space-x-2">
+                        <button onclick="openManageChaptersModal('${comic.id}')" class="px-2.5 py-1 bg-brand-600/20 text-brand-400 hover:bg-brand-600/40 rounded-lg text-[10px] font-bold">Chapters</button>
+                        <button onclick="editComicModal('${comic.id}')" class="px-2.5 py-1 bg-amber-500/20 text-amber-400 hover:bg-amber-500/40 rounded-lg text-[10px] font-bold">Edit</button>
+                        <button onclick="deleteComic('${comic.id}')" class="px-2.5 py-1 bg-rose-500/20 text-rose-400 hover:bg-rose-500/40 rounded-lg text-[10px] font-bold">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterAdminComicsTable(val) {
+            renderAdminComicsTable(val);
+        }
+
+        // MODAL OPENERS & FORM HANDLERS
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function editComicModal(comicId) {
+            const comic = appState.comics.find(c => c.id === comicId);
+            if (!comic) return;
+
+            document.getElementById('modalComicFormTitle').innerText = 'Edit Komik';
+            document.getElementById('formComicId').value = comic.id;
+            document.getElementById('formTitle').value = comic.title;
+            document.getElementById('formCover').value = comic.cover;
+            document.getElementById('formAuthor').value = comic.author;
+            document.getElementById('formArtist').value = comic.artist || '';
+            document.getElementById('formType').value = comic.type;
+            document.getElementById('formFormat').value = comic.format;
+            document.getElementById('formDemographic').value = comic.demographic;
+            document.getElementById('formStatus').value = comic.status;
+            document.getElementById('formGenres').value = (comic.genres || []).join(', ');
+            document.getElementById('formThemes').value = (comic.themes || []).join(', ');
+            document.getElementById('formDescription').value = comic.description;
+
+            openModal('modalAddComic');
+        }
+
+        function saveComicForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('formComicId').value || 'c' + Date.now();
+            const genresArr = document.getElementById('formGenres').value.split(',').map(s => s.trim()).filter(Boolean);
+            const themesArr = document.getElementById('formThemes').value.split(',').map(s => s.trim()).filter(Boolean);
+
+            const comicData = {
+                id,
+                title: document.getElementById('formTitle').value,
+                cover: document.getElementById('formCover').value,
+                author: document.getElementById('formAuthor').value,
+                artist: document.getElementById('formArtist').value,
+                type: document.getElementById('formType').value,
+                format: document.getElementById('formFormat').value,
+                demographic: document.getElementById('formDemographic').value,
+                status: document.getElementById('formStatus').value,
+                genres: genresArr,
+                themes: themesArr,
+                description: document.getElementById('formDescription').value,
+                rating: 4.8,
+                chapters: []
+            };
+
+            const existingIdx = appState.comics.findIndex(c => c.id === id);
+            if (existingIdx > -1) {
+                comicData.chapters = appState.comics[existingIdx].chapters || [];
+                appState.comics[existingIdx] = comicData;
+                logActivity('Admin Edit Comic', `Mengubah metadata ${comicData.title}`, 'Success');
+            } else {
+                appState.comics.unshift(comicData);
+                logActivity('Admin Upload Comic', `Menambahkan komik baru ${comicData.title}`, 'Success');
+            }
+
+            saveToLocalStorage();
+            closeModal('modalAddComic');
+            renderAdminComicsTable();
+            renderUserHome();
+            document.getElementById('comicForm').reset();
+        }
+
+        function deleteComic(comicId) {
+            if (confirm('Apakah Anda yakin ingin menghapus komik ini?')) {
+                const comic = appState.comics.find(c => c.id === comicId);
+                appState.comics = appState.comics.filter(c => c.id !== comicId);
+                saveToLocalStorage();
+                renderAdminComicsTable();
+                renderUserHome();
+                logActivity('Admin Delete Comic', `Menghapus komik ${comic?.title}`, 'Warning');
+            }
+        }
+
+        // CHAPTERS MANAGEMENT
+        function openManageChaptersModal(comicId) {
+            const comic = appState.comics.find(c => c.id === comicId);
+            if (!comic) return;
+
+            document.getElementById('formChapterComicId').value = comic.id;
+            document.getElementById('modalChapterComicTitle').innerText = `Kelola Chapter - ${comic.title}`;
+            renderAdminChapterList(comic);
+            openModal('modalManageChapters');
+        }
+
+        function renderAdminChapterList(comic) {
+            const container = document.getElementById('modalChapterList');
+            container.innerHTML = (comic.chapters || []).map(ch => `
+                <div class="p-2.5 bg-darkbg-800 rounded-xl flex items-center justify-between text-xs border border-darkbg-700">
+                    <div>
+                        <span class="font-bold text-white">Ch. ${ch.number}</span> ${ch.title ? '- ' + ch.title : ''}
+                        <p class="text-[10px] text-slate-400">${ch.pages?.length || 0} Halaman Gambar</p>
+                    </div>
+                    <button onclick="deleteChapter('${comic.id}', '${ch.id}')" class="text-rose-400 hover:text-rose-300">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function saveChapterForm(e) {
+            e.preventDefault();
+            const comicId = document.getElementById('formChapterComicId').value;
+            const comic = appState.comics.find(c => c.id === comicId);
+            if (!comic) return;
+
+            const pagesUrls = document.getElementById('formChapterPages').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+            const newCh = {
+                id: comicId + '-ch' + Date.now(),
+                number: parseFloat(document.getElementById('formChapterNum').value),
+                title: document.getElementById('formChapterTitle').value,
+                releaseDate: new Date().toISOString().slice(0, 10),
+                pages: pagesUrls
+            };
+
+            if (!comic.chapters) comic.chapters = [];
+            comic.chapters.push(newCh);
+
+            saveToLocalStorage();
+            renderAdminChapterList(comic);
+            renderAdminComicsTable();
+            document.getElementById('chapterForm').reset();
+            document.getElementById('formChapterComicId').value = comicId;
+            logActivity('Admin Add Chapter', `Menambah Chapter ${newCh.number} di ${comic.title}`, 'Success');
+        }
+
+        function deleteChapter(comicId, chapterId) {
+            const comic = appState.comics.find(c => c.id === comicId);
+            if (!comic) return;
+
+            comic.chapters = comic.chapters.filter(ch => ch.id !== chapterId);
+            saveToLocalStorage();
+            renderAdminChapterList(comic);
+            renderAdminComicsTable();
+        }
+
+        // CATEGORIES & USERS RENDERERS
+        function renderAdminCategories() {
+            document.getElementById('adminGenreBadgeList').innerHTML = appState.genres.map(g => `
+                <span class="text-xs px-3 py-1 bg-darkbg-900 text-slate-300 rounded-lg border border-darkbg-700 flex items-center space-x-2">
+                    <span>${g}</span>
+                </span>
+            `).join('');
+
+            document.getElementById('adminThemeBadgeList').innerHTML = appState.themes.map(t => `
+                <span class="text-xs px-3 py-1 bg-darkbg-900 text-slate-300 rounded-lg border border-darkbg-700 flex items-center space-x-2">
+                    <span>${t}</span>
+                </span>
+            `).join('');
+        }
+
+        function addCategoryItem(type) {
+            if (type === 'genre') {
+                const val = document.getElementById('newGenreInput').value.trim();
+                if (val && !appState.genres.includes(val)) {
+                    appState.genres.push(val);
+                    document.getElementById('newGenreInput').value = '';
+                }
+            } else {
+                const val = document.getElementById('newThemeInput').value.trim();
+                if (val && !appState.themes.includes(val)) {
+                    appState.themes.push(val);
+                    document.getElementById('newThemeInput').value = '';
+                }
+            }
+            saveToLocalStorage();
+            renderAdminCategories();
+        }
+
+        function renderAdminUsers() {
+            const container = document.getElementById('adminUsersTableBody');
+            const dummyUsers = [
+                { id: 'usr_1', username: 'Pembaca Setia', role: 'User Standard', status: 'Active' },
+                { id: 'usr_2', username: 'Admin_Master', role: 'Super Admin', status: 'Active' },
+                { id: 'usr_3', username: 'OtakuReader99', role: 'VIP User', status: 'Active' }
+            ];
+
+            container.innerHTML = dummyUsers.map(u => `
+                <tr class="hover:bg-darkbg-900/30">
+                    <td class="p-3 text-slate-400">${u.id}</td>
+                    <td class="p-3 font-bold text-white">${u.username}</td>
+                    <td class="p-3 text-brand-400">${u.role}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">${u.status}</span></td>
+                    <td class="p-3 text-right">
+                        <button class="px-2.5 py-1 bg-darkbg-700 text-slate-300 rounded-lg text-[10px]">Edit Permission</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
