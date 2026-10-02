@@ -50,7 +50,8 @@
     <!-- Top Navigation Bar -->
     <header class="sticky top-0 z-50 bg-darkbg-900/90 backdrop-blur-md border-b border-darkbg-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('user', 'home')">
+            <!-- Logo dengan Secret Shortcut (Klik 5x untuk Admin Login) -->
+            <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="handleLogoSecretClick()">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-accent flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-brand-500/20">
                     K
                 </div>
@@ -68,10 +69,10 @@
                 <button onclick="switchView('user', 'me')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-darkbg-800" data-target="me">Me / Pengaturan</button>
             </nav>
 
-            <!-- Right Actions & Admin Gate -->
+            <!-- Right Actions & Admin Gate (Bersih dari tombol admin publik) -->
             <div class="flex items-center space-x-3">
                 <div id="authStatusContainer">
-                    <!-- Dinamis: Tombol Login Admin atau Info Admin yang sedang login -->
+                    <!-- Hanya muncul tombol Dashboard jika sudah login sebagai admin -->
                 </div>
             </div>
         </div>
@@ -505,6 +506,30 @@
         let autoScrollInterval = null;
         let isAutoScrolling = false;
 
+        // Secret click counter for Logo
+        let logoClickCount = 0;
+        let logoClickTimer = null;
+
+        function handleLogoSecretClick() {
+            logoClickCount++;
+            if (logoClickCount === 5) {
+                logoClickCount = 0;
+                if (isAdminLoggedIn) {
+                    switchView('admin', 'dashboard');
+                } else {
+                    switchView('admin', 'login');
+                }
+                return;
+            }
+            clearTimeout(logoClickTimer);
+            logoClickTimer = setTimeout(() => {
+                logoClickCount = 0;
+            }, 1000);
+
+            // Normal click goes to home
+            switchView('user', 'home');
+        }
+
         function saveToStorage() {
             localStorage.setItem('kv_comics', JSON.stringify(comics));
             localStorage.setItem('kv_favorites', JSON.stringify(favorites));
@@ -519,7 +544,7 @@
             renderContinueReading();
         };
 
-        // Render Status Navbar & Admin Gate
+        // Render Status Navbar (Tombol Admin disembunyikan dari user biasa)
         function renderAuthStatus() {
             const container = document.getElementById('authStatusContainer');
             if (isAdminLoggedIn) {
@@ -532,12 +557,8 @@
                     </div>
                 `;
             } else {
-                container.innerHTML = `
-                    <button onclick="switchView('admin', 'login')" class="bg-darkbg-800 hover:bg-darkbg-700 border border-darkbg-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1">
-                        <i class="fa-solid fa-user-shield text-brand-accent"></i>
-                        <span>Admin Login</span>
-                    </button>
-                `;
+                // Kosong agar user biasa tidak melihat tombol admin sama sekali di navbar!
+                container.innerHTML = ``;
             }
         }
 
