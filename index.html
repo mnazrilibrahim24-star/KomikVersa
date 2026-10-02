@@ -69,10 +69,13 @@
                 <button onclick="switchView('user', 'me')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-darkbg-800" data-target="me">Me / Pengaturan</button>
             </nav>
 
-            <!-- Right Actions & Admin Gate (Bersih dari tombol admin publik) -->
+            <!-- Right Actions & Auth User (Bersih dari tombol admin) -->
             <div class="flex items-center space-x-3">
                 <div id="authStatusContainer">
-                    <!-- Hanya muncul tombol Dashboard jika sudah login sebagai admin -->
+                    <button onclick="switchView('user', 'auth')" class="bg-darkbg-800 hover:bg-darkbg-700 text-slate-200 border border-darkbg-700 hover:border-brand-500 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2">
+                        <i class="fa-solid fa-user text-brand-400"></i>
+                        <span>Login</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -272,6 +275,42 @@
                 </div>
             </div>
 
+            <!-- VIEW: AUTH USER (Login / Register) -->
+            <div id="viewAuth" class="user-sub-view hidden max-w-md mx-auto py-12 px-4">
+                <div class="bg-darkbg-800 border border-darkbg-700 rounded-2xl p-6 shadow-xl space-y-6">
+                    <div class="text-center space-y-1">
+                        <h2 id="authFormTitle" class="text-2xl font-bold text-white">Masuk ke KomikVerse</h2>
+                        <p class="text-xs text-slate-400">Nikmati akses baca dan simpan komik favoritmu.</p>
+                    </div>
+
+                    <!-- Tab Switcher (Masuk / Daftar) -->
+                    <div class="flex bg-darkbg-900 p-1 rounded-xl border border-darkbg-700">
+                        <button onclick="switchAuthMode('login')" id="tabLoginBtn" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-brand-600 text-white transition">Masuk</button>
+                        <button onclick="switchAuthMode('register')" id="tabRegisterBtn" class="flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition">Daftar Akun</button>
+                    </div>
+
+                    <!-- Form Container -->
+                    <div class="space-y-4">
+                        <div id="registerNameField" class="hidden space-y-1.5">
+                            <label class="text-xs font-medium text-slate-300">Nama Lengkap</label>
+                            <input type="text" id="authNameInput" placeholder="Nama Anda" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-slate-300">Email / Username</label>
+                            <input type="text" id="authEmailInput" placeholder="email@domain.com" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-slate-300">Password</label>
+                            <input type="password" id="authPassInput" placeholder="••••••••" class="w-full bg-darkbg-900 border border-darkbg-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                        </div>
+
+                        <button onclick="handleUserAuthSubmit()" id="authSubmitBtn" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">
+                            Masuk
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- ================= ADMIN APPLICATION VIEW ================= -->
@@ -366,6 +405,16 @@
         </div>
 
     </main>
+
+    <!-- Footer dengan Tautan Akses Admin Tersembunyi di Sisi Lain -->
+    <footer class="mt-20 py-8 border-t border-darkbg-700 text-center text-xs text-slate-500">
+        <p>&copy; 2026 KomikVerse Masterplan Reader. All rights reserved.</p>
+        <div class="mt-3">
+            <button onclick="switchView('admin', 'login')" class="opacity-30 hover:opacity-100 transition text-[10px] text-slate-400 underline">
+                Admin Portal
+            </button>
+        </div>
+    </footer>
 
     <!-- Modal Upload / Edit Komik -->
     <div id="comicModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
@@ -466,613 +515,95 @@
 
     <!-- JavaScript Aplikasi -->
     <script>
-        // Seed Data Default
-        const defaultComics = [
-            {
-                id: 'c1',
-                title: 'Solo Leveling',
-                author: 'Chugong',
-                artist: 'Dubu',
-                type: 'Manhwa',
-                demo: 'Shounen',
-                cover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60',
-                genre: ['Action', 'Fantasy', 'Adventure'],
-                desc: 'Dunia di mana gerbang misterius terbuka dan menghubungkan monster dengan dunia nyata, serta kebangkitan para Hunter.',
-                chapters: [
-                    { number: 1, title: 'Chapter 1: Double Dungeon', pages: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800&auto=format&fit=crop&q=80'] },
-                    { number: 2, title: 'Chapter 2: Awakening', pages: ['https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&auto=format&fit=crop&q=80'] }
-                ]
-            },
-            {
-                id: 'c2',
-                title: 'One Piece',
-                author: 'Eiichiro Oda',
-                artist: 'Eiichiro Oda',
-                type: 'Manga',
-                demo: 'Shounen',
-                cover: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=60',
-                genre: ['Action', 'Adventure', 'Fantasy'],
-                desc: 'Kisah Monkey D. Luffy yang bermimpi menjadi Raja Bajak Laut.',
-                chapters: [
-                    { number: 1, title: 'Chapter 1: Romance Dawn', pages: ['https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80'] }
-                ]
+        let currentAuthMode = 'login';
+        let currentUser = JSON.parse(localStorage.getItem('komikverse_current_user')) || null;
+
+        function switchAuthMode(mode) {
+            currentAuthMode = mode;
+            const titleEl = document.getElementById('authFormTitle');
+            const nameField = document.getElementById('registerNameField');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const loginBtn = document.getElementById('tabLoginBtn');
+            const regBtn = document.getElementById('tabRegisterBtn');
+
+            if (mode === 'login') {
+                titleEl.textContent = 'Masuk ke KomikVerse';
+                nameField.classList.add('hidden');
+                submitBtn.textContent = 'Masuk';
+                loginBtn.className = 'flex-1 py-2 text-xs font-semibold rounded-lg bg-brand-600 text-white transition';
+                regBtn.className = 'flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition';
+            } else {
+                titleEl.textContent = 'Daftar Akun Baru';
+                nameField.classList.remove('hidden');
+                submitBtn.textContent = 'Daftar & Masuk';
+                regBtn.className = 'flex-1 py-2 text-xs font-semibold rounded-lg bg-brand-600 text-white transition';
+                loginBtn.className = 'flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition';
             }
-        ];
+        }
 
-        let comics = JSON.parse(localStorage.getItem('kv_comics')) || defaultComics;
-        let favorites = JSON.parse(localStorage.getItem('kv_favorites')) || [];
-        let readingProgress = JSON.parse(localStorage.getItem('kv_progress')) || {};
-        let isAdminLoggedIn = JSON.parse(localStorage.getItem('kv_admin_session')) || false;
-        let autoScrollInterval = null;
-        let isAutoScrolling = false;
+        function handleUserAuthSubmit() {
+            const email = document.getElementById('authEmailInput').value.trim();
+            const pass = document.getElementById('authPassInput').value.trim();
+            const name = document.getElementById('authNameInput').value.trim();
 
-        // Secret click counter for Logo
-        let logoClickCount = 0;
-        let logoClickTimer = null;
-
-        function handleLogoSecretClick() {
-            logoClickCount++;
-            if (logoClickCount === 5) {
-                logoClickCount = 0;
-                if (isAdminLoggedIn) {
-                    switchView('admin', 'dashboard');
-                } else {
-                    switchView('admin', 'login');
-                }
+            if (!email || !pass) {
+                alert('Email dan Password wajib diisi!');
                 return;
             }
-            clearTimeout(logoClickTimer);
-            logoClickTimer = setTimeout(() => {
-                logoClickCount = 0;
-            }, 1000);
 
-            // Normal click goes to home
+            if (currentAuthMode === 'register') {
+                if (!name) {
+                    alert('Nama lengkap wajib diisi untuk pendaftaran!');
+                    return;
+                }
+                currentUser = { name, email };
+                localStorage.setItem('komikverse_current_user', JSON.stringify(currentUser));
+                alert('Registrasi berhasil! Selamat datang, ' + name);
+            } else {
+                currentUser = { name: name || email.split('@')[0], email };
+                localStorage.setItem('komikverse_current_user', JSON.stringify(currentUser));
+                alert('Berhasil masuk!');
+            }
+
+            document.getElementById('authEmailInput').value = '';
+            document.getElementById('authPassInput').value = '';
+            document.getElementById('authNameInput').value = '';
+            updateUserAuthUI();
             switchView('user', 'home');
         }
 
-        function saveToStorage() {
-            localStorage.setItem('kv_comics', JSON.stringify(comics));
-            localStorage.setItem('kv_favorites', JSON.stringify(favorites));
-            localStorage.setItem('kv_progress', JSON.stringify(readingProgress));
-            localStorage.setItem('kv_admin_session', JSON.stringify(isAdminLoggedIn));
-        }
-
-        // Init App
-        window.onload = function() {
-            renderAuthStatus();
-            renderHomeComics();
-            renderContinueReading();
-        };
-
-        // Render Status Navbar (Tombol Admin disembunyikan dari user biasa)
-        function renderAuthStatus() {
+        function updateUserAuthUI() {
             const container = document.getElementById('authStatusContainer');
-            if (isAdminLoggedIn) {
+            if (currentUser) {
                 container.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <button onclick="switchView('admin', 'dashboard')" class="bg-brand-600 hover:bg-brand-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow-md">
-                            <i class="fa-solid fa-gauge-high"></i>
-                            <span>Admin Dashboard</span>
-                        </button>
+                    <div class="flex items-center space-x-2 bg-darkbg-800 border border-darkbg-700 px-3 py-1.5 rounded-xl">
+                        <div class="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold">
+                            ${currentUser.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="text-xs font-semibold text-slate-200">${currentUser.name}</span>
+                        <button onclick="handleUserLogout()" class="text-slate-400 hover:text-red-400 ml-2 text-xs" title="Keluar"><i class="fa-solid fa-right-from-bracket"></i></button>
                     </div>
                 `;
             } else {
-                // Kosong agar user biasa tidak melihat tombol admin sama sekali di navbar!
-                container.innerHTML = ``;
+                container.innerHTML = `
+                    <button onclick="switchView('user', 'auth')" class="bg-darkbg-800 hover:bg-darkbg-700 text-slate-200 border border-darkbg-700 hover:border-brand-500 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2">
+                        <i class="fa-solid fa-user text-brand-400"></i>
+                        <span>Login</span>
+                    </button>
+                `;
             }
         }
 
-        // Navigation Switcher
-        function switchView(appMode, viewName) {
-            document.getElementById('userAppView').classList.add('hidden');
-            document.getElementById('adminAppView').classList.add('hidden');
-            document.getElementById('adminLoginView').classList.add('hidden');
-
-            if (appMode === 'user') {
-                document.getElementById('userAppView').classList.remove('hidden');
-                document.querySelectorAll('.user-sub-view').forEach(el => el.classList.add('hidden'));
-
-                if (viewName === 'home') {
-                    document.getElementById('viewHome').classList.remove('hidden');
-                    renderHomeComics();
-                    renderContinueReading();
-                } else if (viewName === 'explore') {
-                    document.getElementById('viewExplore').classList.remove('hidden');
-                    applyExploreFilter();
-                } else if (viewName === 'favorites') {
-                    document.getElementById('viewFavorites').classList.remove('hidden');
-                    renderFavorites();
-                } else if (viewName === 'me') {
-                    document.getElementById('viewMe').classList.remove('hidden');
-                }
-            } else if (appMode === 'admin') {
-                if (viewName === 'login') {
-                    if (isAdminLoggedIn) {
-                        document.getElementById('adminAppView').classList.remove('hidden');
-                        renderAdminDashboard();
-                    } else {
-                        document.getElementById('adminLoginView').classList.remove('hidden');
-                    }
-                } else if (viewName === 'dashboard') {
-                    if (!isAdminLoggedIn) {
-                        document.getElementById('adminLoginView').classList.remove('hidden');
-                    } else {
-                        document.getElementById('adminAppView').classList.remove('hidden');
-                        renderAdminDashboard();
-                    }
-                }
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Admin Login Process
-        function processAdminLogin() {
-            const u = document.getElementById('adminLoginUser').value.trim();
-            const p = document.getElementById('adminLoginPass').value.trim();
-
-            if ((u === 'admin' && p === 'admin123') || (u === 'developer' && p === 'dev123')) {
-                isAdminLoggedIn = true;
-                saveToStorage();
-                renderAuthStatus();
-                switchView('admin', 'dashboard');
-            } else {
-                alert('Username atau Password Admin salah! (Gunakan admin/admin123)');
-            }
-        }
-
-        function adminLogout() {
-            isAdminLoggedIn = false;
-            saveToStorage();
-            renderAuthStatus();
+        function handleUserLogout() {
+            currentUser = null;
+            localStorage.removeItem('komikverse_current_user');
+            updateUserAuthUI();
             switchView('user', 'home');
         }
 
-        // Render Home Comics
-        function renderHomeComics(dataList = comics) {
-            const grid = document.getElementById('comicGrid');
-            if (dataList.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-sm">Tidak ada komik ditemukan.</div>`;
-                return;
-            }
-
-            grid.innerHTML = dataList.map(c => `
-                <div onclick="openDetail('${c.id}')" class="bg-darkbg-800 border border-darkbg-700 rounded-2xl overflow-hidden hover:border-brand-500 transition cursor-pointer group shadow-lg flex flex-col">
-                    <div class="relative aspect-[3/4] overflow-hidden bg-darkbg-900">
-                        <img src="${c.cover}" alt="${c.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                        <span class="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-bold bg-brand-600 text-white shadow">${c.type}</span>
-                    </div>
-                    <div class="p-3.5 flex flex-col flex-grow justify-between space-y-1">
-                        <div>
-                            <h3 class="font-bold text-sm text-white line-clamp-1 group-hover:text-brand-400 transition">${c.title}</h3>
-                            <span class="text-xs text-slate-400 line-clamp-1">${c.author}</span>
-                        </div>
-                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-darkbg-700">
-                            <span><i class="fa-solid fa-book-open text-brand-500 mr-1"></i> ${c.chapters.length} Ch</span>
-                            <span class="text-brand-accent font-semibold">${c.demo}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function filterByType(type) {
-            document.querySelectorAll('.type-filter-btn').forEach(btn => {
-                btn.classList.remove('bg-brand-600', 'text-white');
-                btn.classList.add('bg-darkbg-800', 'text-slate-300');
-            });
-            event.target.classList.add('bg-brand-600', 'text-white');
-            event.target.classList.remove('bg-darkbg-800', 'text-slate-300');
-
-            if (type === 'All') {
-                renderHomeComics(comics);
-            } else {
-                renderHomeComics(comics.filter(c => c.type === type));
-            }
-        }
-
-        function handleSearch(keyword) {
-            const kw = keyword.toLowerCase();
-            const filtered = comics.filter(c => 
-                c.title.toLowerCase().includes(kw) || 
-                c.author.toLowerCase().includes(kw) || 
-                c.genre.some(g => g.toLowerCase().includes(kw)) ||
-                c.type.toLowerCase().includes(kw)
-            );
-            renderHomeComics(filtered);
-        }
-
-        // Detail Komik
-        let currentComicId = null;
-        function openDetail(id) {
-            currentComicId = id;
-            const c = comics.find(x => x.id === id);
-            if (!c) return;
-
-            const isFav = favorites.includes(id);
-
-            const container = document.getElementById('detailContainer');
-            container.innerHTML = `
-                <div class="flex flex-col md:flex-row gap-6">
-                    <img src="${c.cover}" alt="${c.title}" class="w-48 h-64 object-cover rounded-2xl shadow-xl border border-darkbg-700 mx-auto md:mx-0">
-                    <div class="space-y-4 flex-grow">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-brand-500/20 text-brand-400">${c.type}</span>
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-darkbg-700 text-slate-300">${c.demo}</span>
-                        </div>
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-white">${c.title}</h1>
-                        <p class="text-xs text-slate-400">Author: <span class="text-slate-200 font-semibold">${c.author}</span> | Artist: <span class="text-slate-200 font-semibold">${c.artist}</span></p>
-                        <p class="text-sm text-slate-300 leading-relaxed">${c.desc}</p>
-                        <div class="flex flex-wrap gap-2 pt-2">
-                            ${c.genre.map(g => `<span class="px-2 py-1 bg-darkbg-900 border border-darkbg-700 rounded-lg text-xs text-slate-300">${g}</span>`).join('')}
-                        </div>
-                        <div class="flex items-center space-x-3 pt-2">
-                            <button onclick="toggleFavorite('${c.id}')" class="px-4 py-2 rounded-xl text-sm font-semibold border ${isFav ? 'bg-red-600 border-red-500 text-white' : 'bg-darkbg-900 border-darkbg-700 text-slate-300'} transition">
-                                <i class="fa-solid fa-heart mr-1"></i> ${isFav ? 'Favorit' : 'Tambah Favorit'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-4 pt-6 border-t border-darkbg-700">
-                    <h3 class="text-lg font-bold text-white">Daftar Chapter (${c.chapters.length})</h3>
-                    <div class="space-y-2 max-h-80 overflow-y-auto pr-2">
-                        ${c.chapters.length === 0 ? '<p class="text-sm text-slate-400">Belum ada chapter tersedia.</p>' : 
-                            c.chapters.map(ch => `
-                                <div onclick="openReader('${c.id}',${ch.number})" class="flex items-center justify-between p-3.5 bg-darkbg-900 border border-darkbg-700 rounded-xl hover:border-brand-500 transition cursor-pointer">
-                                    <span class="font-semibold text-sm text-slate-200">${ch.title}</span>
-                                    <span class="text-xs text-slate-400"><i class="fa-solid fa-chevron-right text-[10px]"></i></span>
-                                </div>
-                            `).join('')}
-                    </div>
-                </div>
-            `;
-            switchView('user', 'detail');
-            document.getElementById('viewDetail').classList.remove('hidden');
-        }
-
-        function toggleFavorite(id) {
-            if (favorites.includes(id)) {
-                favorites = favorites.filter(x => x !== id);
-            } else {
-                favorites.push(id);
-            }
-            saveToStorage();
-            openDetail(id);
-        }
-
-        function renderFavorites() {
-            const grid = document.getElementById('favoritesGrid');
-            const favComics = comics.filter(c => favorites.includes(c.id));
-            if (favComics.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-sm">Belum ada komik favorit yang disimpan.</div>`;
-                return;
-            }
-            grid.innerHTML = favComics.map(c => `
-                <div onclick="openDetail('${c.id}')" class="bg-darkbg-800 border border-darkbg-700 rounded-2xl overflow-hidden hover:border-brand-500 transition cursor-pointer group shadow-lg flex flex-col">
-                    <div class="relative aspect-[3/4] overflow-hidden bg-darkbg-900">
-                        <img src="${c.cover}" alt="${c.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                    </div>
-                    <div class="p-3.5 flex flex-col flex-grow justify-between space-y-1">
-                        <h3 class="font-bold text-sm text-white line-clamp-1">${c.title}</h3>
-                        <span class="text-xs text-slate-400">${c.type}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Comic Reader
-        let activeReaderComic = null;
-        let activeReaderChapter = null;
-
-        function openReader(comicId, chapterNum) {
-            const c = comics.find(x => x.id === comicId);
-            const ch = c.chapters.find(x => x.number === chapterNum);
-            if (!c || !ch) return;
-
-            activeReaderComic = c;
-            activeReaderChapter = ch;
-
-            // Simpan Progress
-            readingProgress[comicId] = { chapterNum: ch.number, title: ch.title, updatedAt: new Date().toLocaleDateString() };
-            saveToStorage();
-
-            document.getElementById('readerTitleHeader').innerText = `${c.title} - ${ch.title}`;
-            const container = document.getElementById('readerPagesContainer');
-            
-            let pagesHtml = ch.pages && ch.pages.length > 0 ? ch.pages.map((p, idx) => `
-                <img src="${p}" alt="Page ${idx+1}" class="w-full max-w-2xl object-contain rounded" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80'">
-            `).join('') : `<p class="py-20 text-slate-400 text-sm">Tidak ada halaman gambar dalam chapter ini.</p>`;
-
-            container.innerHTML = pagesHtml;
-
-            document.getElementById('userAppView').classList.remove('hidden');
-            document.querySelectorAll('.user-sub-view').forEach(el => el.classList.add('hidden'));
-            document.getElementById('viewReader').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function closeReader() {
-            stopAutoScroll();
-            if (currentComicId) openDetail(currentComicId);
-            else switchView('user', 'home');
-        }
-
-        function toggleAutoScroll() {
-            const btn = document.getElementById('autoScrollBtn');
-            if (isAutoScrolling) {
-                stopAutoScroll();
-                btn.innerHTML = `<i class="fa-solid fa-play mr-1"></i> Auto Scroll`;
-                btn.classList.remove('bg-brand-600', 'text-white');
-            } else {
-                startAutoScroll();
-                btn.innerHTML = `<i class="fa-solid fa-pause mr-1"></i> Stop Scroll`;
-                btn.classList.add('bg-brand-600', 'text-white');
-            }
-        }
-
-        function startAutoScroll() {
-            isAutoScrolling = true;
-            autoScrollInterval = setInterval(() => {
-                window.scrollBy({ top: 2, behavior: 'smooth' });
-                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-                    stopAutoScroll();
-                }
-            }, 50);
-        }
-
-        function stopAutoScroll() {
-            isAutoScrolling = false;
-            clearInterval(autoScrollInterval);
-        }
-
-        function renderContinueReading() {
-            const section = document.getElementById('continueReadingSection');
-            const card = document.getElementById('continueReadingCard');
-            const keys = Object.keys(readingProgress);
-            if (keys.length === 0) {
-                section.classList.add('hidden');
-                return;
-            }
-
-            const lastComicId = keys[keys.length - 1];
-            const c = comics.find(x => x.id === lastComicId);
-            const prog = readingProgress[lastComicId];
-            if (!c || !prog) {
-                section.classList.add('hidden');
-                return;
-            }
-
-            section.classList.remove('hidden');
-            card.innerHTML = `
-                <div class="flex items-center space-x-4">
-                    <img src="${c.cover}" alt="${c.title}" class="w-14 h-18 object-cover rounded-xl border border-darkbg-700">
-                    <div>
-                        <span class="text-xs text-brand-400 font-semibold">${c.title}</span>
-                        <h4 class="font-bold text-sm text-white">${prog.title}</h4>
-                        <span class="text-[11px] text-slate-400">Terakhir dibaca: ${prog.updatedAt}</span>
-                    </div>
-                </div>
-                <button onclick="openReader('${c.id}', ${prog.chapterNum})" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition">
-                    Lanjut Baca <i class="fa-solid fa-arrow-right ml-1"></i>
-                </button>
-            `;
-        }
-
-        // Explore Filter
-        function applyExploreFilter() {
-            const g = document.getElementById('filterGenre').value;
-            const d = document.getElementById('filterDemo').value;
-            const t = document.getElementById('filterTheme').value;
-
-            let result = comics;
-            if (g) result = result.filter(x => x.genre.includes(g));
-            if (d) result = result.filter(x => x.demo === d);
-
-            const grid = document.getElementById('exploreGrid');
-            if (result.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-sm">Tidak ada komik sesuai filter.</div>`;
-                return;
-            }
-
-            grid.innerHTML = result.map(c => `
-                <div onclick="openDetail('${c.id}')" class="bg-darkbg-800 border border-darkbg-700 rounded-2xl overflow-hidden hover:border-brand-500 transition cursor-pointer group shadow-lg flex flex-col">
-                    <div class="relative aspect-[3/4] overflow-hidden bg-darkbg-900">
-                        <img src="${c.cover}" alt="${c.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                    </div>
-                    <div class="p-3.5 flex flex-col flex-grow justify-between space-y-1">
-                        <h3 class="font-bold text-sm text-white line-clamp-1">${c.title}</h3>
-                        <span class="text-xs text-slate-400">${c.type}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Settings / Me
-        function clearCacheData() {
-            localStorage.removeItem('kv_progress');
-            readingProgress = {};
-            alert('Cache data pembacaan berhasil dibersihkan.');
-            renderContinueReading();
-        }
-
-        function backupDataJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ comics, favorites, readingProgress }));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", "komikverse_backup.json");
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-        }
-
-        // ================= ADMIN FUNCTIONS =================
-        function renderAdminDashboard() {
-            document.getElementById('adminStatComics').innerText = comics.length;
-            let totalCh = comics.reduce((acc, curr) => acc + curr.chapters.length, 0);
-            document.getElementById('adminStatChapters').innerText = totalCh;
-            document.getElementById('adminStatFavorites').innerText = favorites.length;
-
-            const tbody = document.getElementById('adminComicsTableBody');
-            tbody.innerHTML = comics.map(c => `
-                <tr class="hover:bg-darkbg-900/50 transition">
-                    <td class="p-3 flex items-center space-x-3">
-                        <img src="${c.cover}" class="w-8 h-10 object-cover rounded">
-                        <span class="font-semibold text-white">${c.title}</span>
-                    </td>
-                    <td class="p-3 text-slate-300">${c.type} / ${c.demo}</td>
-                    <td class="p-3 text-slate-300">${c.genre.join(', ')}</td>
-                    <td class="p-3 text-slate-300">${c.chapters.length} Ch</td>
-                    <td class="p-3 text-right space-x-2">
-                        <button onclick="openChapterModal('${c.id}')" class="bg-brand-600/20 text-brand-400 px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-brand-600 hover:text-white transition">Chapter</button>
-                        <button onclick="openEditComicModal('${c.id}')" class="bg-darkbg-700 text-slate-300 px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-darkbg-600 transition">Edit</button>
-                        <button onclick="deleteComic('${c.id}')" class="bg-red-600/20 text-red-400 px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-red-600 hover:text-white transition">Hapus</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function openUploadModal() {
-            document.getElementById('modalTitle').innerText = 'Upload Komik Baru';
-            document.getElementById('editComicId').value = '';
-            document.getElementById('formTitle').value = '';
-            document.getElementById('formAuthor').value = '';
-            document.getElementById('formArtist').value = '';
-            document.getElementById('formCover').value = '';
-            document.getElementById('formGenre').value = '';
-            document.getElementById('formDesc').value = '';
-            document.getElementById('comicModal').classList.remove('hidden');
-        }
-
-        function openEditComicModal(id) {
-            const c = comics.find(x => x.id === id);
-            if (!c) return;
-            document.getElementById('modalTitle').innerText = 'Edit Komik';
-            document.getElementById('editComicId').value = c.id;
-            document.getElementById('formTitle').value = c.title;
-            document.getElementById('formAuthor').value = c.author;
-            document.getElementById('formArtist').value = c.artist;
-            document.getElementById('formType').value = c.type;
-            document.getElementById('formDemo').value = c.demo;
-            document.getElementById('formCover').value = c.cover;
-            document.getElementById('formGenre').value = c.genre.join(', ');
-            document.getElementById('formDesc').value = c.desc;
-            document.getElementById('comicModal').classList.remove('hidden');
-        }
-
-        function closeComicModal() {
-            document.getElementById('comicModal').classList.add('hidden');
-        }
-
-        function saveComicData() {
-            const id = document.getElementById('editComicId').value;
-            const title = document.getElementById('formTitle').value.trim();
-            const author = document.getElementById('formAuthor').value.trim();
-            const artist = document.getElementById('formArtist').value.trim();
-            const type = document.getElementById('formType').value;
-            const demo = document.getElementById('formDemo').value;
-            const cover = document.getElementById('formCover').value.trim() || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500';
-            const genre = document.getElementById('formGenre').value.split(',').map(x => x.trim()).filter(Boolean);
-            const desc = document.getElementById('formDesc').value.trim();
-
-            if (!title) {
-                alert('Judul komik wajib diisi!');
-                return;
-            }
-
-            if (id) {
-                // Edit
-                const idx = comics.findIndex(x => x.id === id);
-                if (idx !== -1) {
-                    comics[idx] = { ...comics[idx], title, author, artist, type, demo, cover, genre, desc };
-                }
-            } else {
-                // New
-                const newComic = {
-                    id: 'c_' + Date.now(),
-                    title, author, artist, type, demo, cover, genre, desc,
-                    chapters: []
-                };
-                comics.push(newComic);
-            }
-
-            saveToStorage();
-            closeComicModal();
-            renderAdminDashboard();
-        }
-
-        function deleteComic(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus komik ini?')) {
-                comics = comics.filter(x => x.id !== id);
-                saveToStorage();
-                renderAdminDashboard();
-            }
-        }
-
-        // Kelola Chapter Admin
-        function openChapterModal(comicId) {
-            document.getElementById('chapterComicId').value = comicId;
-            renderChapterListAdmin(comicId);
-            document.getElementById('chapterModal').classList.remove('hidden');
-        }
-
-        function closeChapterModal() {
-            document.getElementById('chapterModal').classList.add('hidden');
-        }
-
-        function renderChapterListAdmin(comicId) {
-            const c = comics.find(x => x.id === comicId);
-            const listContainer = document.getElementById('chapterListAdmin');
-            if (!c || c.chapters.length === 0) {
-                listContainer.innerHTML = `<p class="text-xs text-slate-400">Belum ada chapter.</p>`;
-                return;
-            }
-
-            listContainer.innerHTML = c.chapters.map(ch => `
-                <div class="flex items-center justify-between bg-darkbg-800 p-2.5 rounded-xl border border-darkbg-700 text-xs">
-                    <span class="font-semibold text-white">${ch.title}</span>
-                    <button onclick="deleteChapter('${c.id}', ${ch.number})" class="text-red-400 hover:text-red-300 font-semibold">Hapus</button>
-                </div>
-            `).join('');
-        }
-
-        function saveNewChapter() {
-            const comicId = document.getElementById('chapterComicId').value;
-            const number = parseInt(document.getElementById('chapNumber').value);
-            const title = document.getElementById('chapTitle').value.trim();
-            const pagesInput = document.getElementById('chapPages').value.trim();
-
-            if (!number || !title) {
-                alert('Nomor dan Judul Chapter wajib diisi!');
-                return;
-            }
-
-            const pages = pagesInput ? pagesInput.split(/[\n,]+/).map(x => x.trim()).filter(Boolean) : [
-                'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80'
-            ];
-
-            const c = comics.find(x => x.id === comicId);
-            if (c) {
-                c.chapters.push({ number, title, pages });
-                saveToStorage();
-                document.getElementById('chapNumber').value = '';
-                document.getElementById('chapTitle').value = '';
-                document.getElementById('chapPages').value = '';
-                renderChapterListAdmin(comicId);
-                renderAdminDashboard();
-            }
-        }
-
-        function deleteChapter(comicId, chapterNum) {
-            if (confirm('Hapus chapter ini?')) {
-                const c = comics.find(x => x.id === comicId);
-                if (c) {
-                    c.chapters = c.chapters.filter(x => x.number !== chapterNum);
-                    saveToStorage();
-                    renderChapterListAdmin(comicId);
-                    renderAdminDashboard();
-                }
-            }
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUserAuthUI();
+        });
     </script>
 </body>
 </html>
